@@ -3,7 +3,8 @@ import {
   Excalidraw,
   Footer,
   WelcomeScreen,
-  serializeAsJSON,
+  exportToBlob,
+  loadFromBlob,
 } from "@excalidraw/excalidraw";
 import {
   ExcalidrawImperativeAPI,
@@ -22,21 +23,25 @@ function Whiteboard() {
       const elements = excalidrawAPI.getSceneElements();
       const appState = excalidrawAPI.getAppState();
       const files = excalidrawAPI.getFiles();
-      currentFile.write(
-        serializeAsJSON(elements, appState, files, "local")
-      );      
+      const saver = currentFile.clone();
+      exportToBlob({appState:{
+        ...appState,
+        exportEmbedScene: true,
+      }, elements, files, mimeType: "image/png",}).then((blob) => {
+         blob.arrayBuffer().then((buffer) => {
+            saver.writeAsBinary(buffer);
+         });
+      });    
     });
-    currentFile.read().then((content) => {
-      try{
-        const dataState = JSON.parse(content);
-        if (dataState.type !== "excalidraw") {
-          throw new Error("Not a valid Excalidraw file");
-        }
-        excalidrawAPI.updateScene(dataState);
-      } catch (e) {
+    currentFile.readAsBinary().then((buffer) => {
+      if (buffer.length === 0) return;
+      const blob = new Blob([buffer], {type: "image/png"});
+      loadFromBlob(blob, null, null).then((data) => {
+        excalidrawAPI.updateScene(data);
+      }).catch((_) => {
         window.nole.notify.error({content: "File load failed! Is it a valid Excalidraw file?"});
         setCurrenFile(null);
-      }
+      });
     });
     return () => {
       disposer();

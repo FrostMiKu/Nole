@@ -22,7 +22,7 @@ function makeTitle(filename: string, isDir: boolean) {
     case ".typ":
       filename = "📝 " + p.name;
       break;
-    case ".excalidraw":
+    case ".draw":
       filename = "🎨 " + p.name;
       break;
     case ".png":

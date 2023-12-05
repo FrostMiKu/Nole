@@ -51,7 +51,7 @@ function App() {
     case ".typ":
       workspace = <Editor />;
       break;
-    case ".excalidraw":
+    case ".draw":
       workspace = <Whiteboard />;
       break;
     case ".png":

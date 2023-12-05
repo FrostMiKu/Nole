@@ -30,14 +30,9 @@ function Ribbon(): JSX.Element {
         name: "New Canvas",
         icon: "graph",
         action: () => {
-          window.nole!.fs.tryCreateFile("Untitled.excalidraw").then((file) => {
-            file.write(
-              JSON.stringify({
-                type: "excalidraw",
-                version: 2,
-                elements: [],
-                appState: {},
-              })
+          window.nole!.fs.tryCreateFile("Untitled.draw").then((file) => {
+            file.writeAsBinary(
+              []
             );
           });
         },

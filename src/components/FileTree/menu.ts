@@ -31,16 +31,11 @@ export const DirContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
     event: () => {
       window
         .nole!.fs.tryCreateFile(
-          path.join(getPath(treeData, node.pos),"Untitled.excalidraw")
+          path.join(getPath(treeData, node.pos),"Untitled.draw")
         )
         .then((file) => {
-          file.write(
-            JSON.stringify({
-              type: "excalidraw",
-              version: 2,
-              elements: [],
-              appState: {},
-            })
+          file.writeAsBinary(
+            []
           );
         })
         .catch((err) => {
