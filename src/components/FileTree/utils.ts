@@ -45,7 +45,7 @@ function makeTitle(filename: string, isDir: boolean) {
       filename = "📚 " + p.name;
       break;
     default:
-      filename = "🤔 " + p.name;
+      filename = "🤔 " + p.base;
       break;
   }
   return filename;

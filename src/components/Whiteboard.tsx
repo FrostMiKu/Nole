@@ -47,8 +47,8 @@ function Whiteboard() {
     <Excalidraw
       UIOptions={{
         canvasActions: {
-          loadScene: true,
-          saveToActiveFile: true,
+          loadScene: false,
+          saveToActiveFile: false,
           saveAsImage: false,
           export: false,
           clearCanvas: true,
