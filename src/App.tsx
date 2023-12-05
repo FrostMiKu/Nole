@@ -8,6 +8,7 @@ import Ribbon from "./components/Ribbon";
 import { useEffect } from "react";
 import DevEventListener from "./DevEventListener";
 import Whiteboard from "./components/Whiteboard";
+import PictureViewer from "./components/PictureViewer";
 
 function App() {
   const [currentFile, setCurrenFile] = useAtom(CurrentFileAtom);
@@ -35,7 +36,7 @@ function App() {
       })
     );
     return () => {
-      disposers.forEach((disposer) => disposer());
+      disposers.forEach((disposer) => disposer());      
       window.nole!.clearCache()
     };
   }, [currentFile]);
@@ -52,6 +53,13 @@ function App() {
       break;
     case ".excalidraw":
       workspace = <Whiteboard />;
+      break;
+    case ".png":
+    case ".jpg":
+    case ".jpeg":
+    case ".bmp":
+    case ".gif":
+      workspace = <PictureViewer />;
       break;
     default:
       if (currentFile) {

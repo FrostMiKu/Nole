@@ -3,12 +3,26 @@ import App from "./App";
 import { open } from "@tauri-apps/api/dialog";
 import { useAtom, useSetAtom } from "jotai";
 import { AppInitializedAtom, CurrentFileAtom } from "./lib/state";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { AnchorButton } from "@blueprintjs/core";
+import { throttle } from "./lib/utils";
 
 function Loading() {
   const [appInitialized, setAppInitialized] = useAtom(AppInitializedAtom);
   const setCurrenFile = useSetAtom(CurrentFileAtom);
+
+  const onClick = useCallback(throttle(() => {
+    open({
+      multiple: false,
+      directory: true,
+    }).then((dirpath) => {
+      if (dirpath === null) return;
+
+      window.nole = new Nole(dirpath as string);
+      setCurrenFile(null);
+      setAppInitialized(true);
+    });
+  }, 1000),[])
 
   useEffect(() => {
     const path = localStorage.getItem("workspace");
@@ -30,18 +44,7 @@ function Loading() {
           className="mt-4"
             text="Open"
             icon="folder-open"
-            onClick={() => {
-              open({
-                multiple: false,
-                directory: true,
-              }).then((dirpath) => {
-                if (dirpath === null) return;
-
-                window.nole = new Nole(dirpath as string);
-                setCurrenFile(null);
-                setAppInitialized(true);
-              });
-            }}
+            onClick={onClick}
           />
         </div>
       )}

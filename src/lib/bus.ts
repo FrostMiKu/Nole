@@ -1,9 +1,13 @@
 import { EventEmitter } from "@tauri-apps/api/shell";
 
-type NoleEvent = AppEvent | FileEvent;
+type NoleEvent = AppEvent | FileEvent | UIEvent;
 
 export enum AppEvent {
     Init = "app:init",
+}
+
+export enum UIEvent {
+  ToggleFileTree = "ui:filetree:toggle",
 }
 
 export enum FileEvent {

@@ -6,7 +6,7 @@ import path from "path-browserify";
 type MenuProps = {
   node: EventDataNode<DataNode>;
   treeData: FileTreeNode[];
-  setEditPos: React.Dispatch<React.SetStateAction<string|null>>;
+  setEditPos: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 export const DirContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
@@ -17,8 +17,32 @@ export const DirContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
   {
     label: "New File",
     event: () => {
-      window.nole!.fs
-        .tryCreateFile(path.join(getPath(treeData, node.pos), "Untitled.typ"))
+      window
+        .nole!.fs.tryCreateFile(
+          path.join(getPath(treeData, node.pos), "Untitled.typ")
+        )
+        .catch((err) => {
+          window.nole!.notify.error({ content: err });
+        });
+    },
+  },
+  {
+    label: "New Canvas",
+    event: () => {
+      window
+        .nole!.fs.tryCreateFile(
+          path.join(getPath(treeData, node.pos),"Untitled.excalidraw")
+        )
+        .then((file) => {
+          file.write(
+            JSON.stringify({
+              type: "excalidraw",
+              version: 2,
+              elements: [],
+              appState: {},
+            })
+          );
+        })
         .catch((err) => {
           window.nole!.notify.error({ content: err });
         });
@@ -27,8 +51,10 @@ export const DirContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
   {
     label: "New Folder",
     event: () => {
-      window.nole!.fs
-        .tryCreateDir(path.join(getPath(treeData, node.pos), "Untitled"))
+      window
+        .nole!.fs.tryCreateDir(
+          path.join(getPath(treeData, node.pos), "Untitled")
+        )
         .catch((err) => {
           window.nole!.notify.error({ content: err });
         });
@@ -39,6 +65,9 @@ export const DirContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
     event: () => {
       setEditPos(node.pos);
     },
+  },
+  {
+    is_separator: true,
   },
   {
     label: "Delete",
@@ -70,6 +99,9 @@ export const FileContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
     event: () => {
       setEditPos(node.pos);
     },
+  },
+  {
+    is_separator: true,
   },
   {
     label: "Delete",

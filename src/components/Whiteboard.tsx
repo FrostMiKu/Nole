@@ -8,43 +8,40 @@ import {
 import {
   ExcalidrawImperativeAPI,
 } from "@excalidraw/excalidraw/types/types";
-import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useState } from "react";
-import { debounce } from "../lib/utils";
+import { useAtom } from "jotai";
+import { useEffect, useState } from "react";
 
 function Whiteboard() {
-  const currentFile = useAtomValue(CurrentFileAtom);
+  const [currentFile, setCurrenFile] = useAtom(CurrentFileAtom);
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!currentFile || !excalidrawAPI) return;
+    const disposer = excalidrawAPI.onPointerUp(()=>{
+      const elements = excalidrawAPI.getSceneElements();
+      const appState = excalidrawAPI.getAppState();
+      const files = excalidrawAPI.getFiles();
+      currentFile.write(
+        serializeAsJSON(elements, appState, files, "local")
+      );      
+    });
     currentFile.read().then((content) => {
-      if (content.length === 0) return;
-      const dataState = JSON.parse(content);
-      excalidrawAPI.updateScene(dataState);
-      setLoading(false);
+      try{
+        const dataState = JSON.parse(content);
+        if (dataState.type !== "excalidraw") {
+          throw new Error("Not a valid Excalidraw file");
+        }
+        excalidrawAPI.updateScene(dataState);
+      } catch (e) {
+        window.nole.notify.error({content: "File load failed! Is it a valid Excalidraw file?"});
+        setCurrenFile(null);
+      }
     });
     return () => {
-      setLoading(true);
+      disposer();
     };
   }, [currentFile, excalidrawAPI]);
-
-  const autosave = useCallback(
-    debounce((elements, appState, files) => {
-      if (!currentFile || !excalidrawAPI || loading) return;
-      // if (currentFile && excalidrawAPI) {
-        // const elements = excalidrawAPI.getSceneElements();
-        // const appState = excalidrawAPI.getAppState();
-        // const files = excalidrawAPI.getFiles();
-        currentFile.write(
-          serializeAsJSON(elements, appState, files, "local")
-        );
-      // }
-    }, window.nole.config.autosave_delay),
-    [currentFile, excalidrawAPI, loading]
-  );
 
   return (
     <Excalidraw
@@ -59,7 +56,6 @@ function Whiteboard() {
         },
       }}
       excalidrawAPI={(api) => setExcalidrawAPI(api)}
-      onChange={autosave}
     >
       <WelcomeScreen>
         <WelcomeScreen.Hints.ToolbarHint />
@@ -74,7 +70,7 @@ function Whiteboard() {
       </WelcomeScreen>
       <Footer>
         <div className="p-1 mx-2 w-full flex flex-row-reverse font-bold text-lg">
-          {loading?"Loading...":currentFile?.name}
+          {currentFile?.name}
         </div>
       </Footer>
     </Excalidraw>

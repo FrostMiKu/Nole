@@ -17,33 +17,34 @@ import { showMenu } from "tauri-plugin-context-menu";
 import { DirContextMenu, FileContextMenu } from "./menu";
 import path from "path-browserify";
 import RenameInputer from "./RenameInputer";
+import { UIEvent } from "../../lib/bus";
 
 type OnExpandFn = TreeProps["onExpand"];
 type OnDropFn = TreeProps["onDrop"];
 type OnSelectFn = TreeProps["onSelect"];
 type LoadFn = TreeProps["loadData"];
 
-// const rootNode: FileTreeNode = {
-//   key: window.nole!.workspace()!,
-//   title: "Nólë",
-//   isLeaf: false,
-//   pathpoint: window.nole!.workspace()!,
-// };
 
 const FileTree: React.FC = () => {
+  const [hiddenFileTree, setHiddenFileTree] = useState<boolean>(false);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([
     window.nole!.workspace()!,
   ]);
-  // const [treeData, setTreeData] = useState<FileTreeNode[]>([rootNode]);
   const [treeData, setTreeData] = useState<FileTreeNode[]>([
     {
       key: window.nole!.workspace()!,
-      title: "Nólë",
+      title: "⭐ Nólë",
       isLeaf: false,
       pathpoint: window.nole!.workspace()!,
     },
   ]);
   const [editPos, setEditPos] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.nole.bus.on(UIEvent.ToggleFileTree, () => {
+      setHiddenFileTree(!hiddenFileTree);
+    })
+  },[hiddenFileTree])
 
   useEffect(() => {
     const disposers: (() => void)[] = [];
@@ -119,7 +120,7 @@ const FileTree: React.FC = () => {
           );
           setTreeData([...tree]);
         }
-      })
+      }),
     );
     return () => {
       disposers.forEach((disposer) => disposer());
@@ -135,14 +136,6 @@ const FileTree: React.FC = () => {
     const to = path.join(getPath(treeData, info.node.pos), path.basename(from));
     window
       .nole!.fs.move(from, to)
-      // .then(() => {
-      //   const tree = [...treeData];
-      //   const targetNode = findNode(tree, info.node.pos); // get the node, pos will be changed
-      //   const sourceNode = findNode(tree, info.dragNode.pos); // pos changed
-      //   deleteNode(tree, info.dragNode.pos); // pos changed
-      //   targetNode!.children = sortNodesByPathpoint([...targetNode!.children!, sourceNode!]);
-      //   setTreeData([...tree]);
-      // })
       .catch((err) => {
         window.nole!.notify.error({ content: err });
       });
@@ -195,11 +188,12 @@ const FileTree: React.FC = () => {
   }, [editPos]);
 
   return (
-    <div className="min-w-52 w-52 lg:w-60 bg-gray-100 overflow-x-hidden">
+    <div className={"min-w-52 w-52 lg:w-60 bg-gray-100 overflow-hidden " + (hiddenFileTree?"hidden":"")}>
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
       <Tree
-        className="bg-red-100 w-full h-full overflow-y-auto"
+        className="bg-slate-100 w-full h-full overflow-y-auto overflow-x-hidden"
         virtual
+        showIcon={false}
         draggable={(node) => {
           return typeof node.title === "string";
         }}

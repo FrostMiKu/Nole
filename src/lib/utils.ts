@@ -32,12 +32,12 @@ export async function getPromiseState(
   ]);
 }
 
-export type ThrottleFn<T extends any[]> = (...args: T) => Promise<void>;
+export type AsyncThrottleFn<T extends any[]> = (...args: T) => Promise<void>;
 // debounce a async function, if promise state is pending will cache function's args
 // but not call this function. when promise is resolved, call function with cached args.
-export const throttle = <T extends any[]>(
+export const asyncThrottle = <T extends any[]>(
   fn: (...args: T) => Promise<unknown>
-): ThrottleFn<T> => {
+): AsyncThrottleFn<T> => {
   let isExecuting = false;
   let pendingArgs: T | undefined;
 
@@ -71,6 +71,17 @@ export const throttle = <T extends any[]>(
     pendingArgs = args;
   };
 };
+
+export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...funcArgs: Parameters<T>) => void {
+  let inThrottle: boolean;
+  return function(this: any, ...args: Parameters<T>) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}
 
 // covter svg to canvas
 export async function createCanvas(

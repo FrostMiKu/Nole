@@ -13,11 +13,49 @@ export const sortNodesByPathpoint = sortBy<FileTreeNode>(
     [(file) => file.pathpoint, "asc"]
   );
 
+function makeTitle(filename: string, isDir: boolean) {
+  if (isDir) {
+    return "📁 " + filename;
+  }
+  const p = path.parse(filename);
+  switch (p.ext) {
+    case ".typ":
+      filename = "📝 " + p.name;
+      break;
+    case ".excalidraw":
+      filename = "🎨 " + p.name;
+      break;
+    case ".png":
+    case ".jpg":
+    case ".jpeg":
+    case ".gif":
+    case ".svg":
+    case ".bmp":
+      filename = "🖼️ " + p.name;
+      break;
+    case ".pdf":
+      filename = "📑 " + p.name;
+      break;
+    case ".zip":
+    case ".tar":
+    case ".gz":
+    case ".bz2":
+    case ".xz":
+    case ".7z":
+      filename = "📚 " + p.name;
+      break;
+    default:
+      filename = "🤔 " + p.name;
+      break;
+  }
+  return filename;
+}
+
 export function convertPathToFileTreeNode(nodepath: string, isDir: boolean): FileTreeNode {
   const p = path.parse(nodepath);
   return {
     key: randomString(6),
-    title: p.ext === ".typ"?p.name:p.base, // todo: apply filter
+    title: makeTitle(p.base, isDir), // todo: apply filter
     isLeaf: !isDir,
     pathpoint: p.base,
     children: isDir ? [] : undefined,

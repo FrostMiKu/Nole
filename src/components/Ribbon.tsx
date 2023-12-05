@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { BlueprintIcons_16Id } from "@blueprintjs/icons/lib/esm/generated/16px/blueprint-icons-16";
 import { AppInitializedAtom, RibbonAtom } from "../lib/state";
 import { randomString } from "remeda";
+import { UIEvent } from "../lib/bus";
 
 function Ribbon(): JSX.Element {
   const [ribbons, setRibbons] = useAtom(RibbonAtom);
@@ -11,6 +12,13 @@ function Ribbon(): JSX.Element {
   useEffect(() => {
     if (ribbons.length > 0) return;
     setRibbons([
+      {
+        name: "Toggle File Tree",
+        icon: "folder-close",
+        action: () => {
+          window.nole.bus.emit(UIEvent.ToggleFileTree);
+        },
+      },
       {
         name: "New file",
         icon: "annotation",
@@ -20,9 +28,18 @@ function Ribbon(): JSX.Element {
       },
       {
         name: "New Canvas",
-        icon: "style",
+        icon: "graph",
         action: () => {
-          window.nole!.fs.tryCreateFile("Untitled.excalidraw");
+          window.nole!.fs.tryCreateFile("Untitled.excalidraw").then((file) => {
+            file.write(
+              JSON.stringify({
+                type: "excalidraw",
+                version: 2,
+                elements: [],
+                appState: {},
+              })
+            );
+          });
         },
       },
     ]);

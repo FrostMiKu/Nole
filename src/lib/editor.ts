@@ -57,8 +57,6 @@ export function getTypingExtension(fn: (content: string) => void) {
 
 export const autosave = (saveDelay: number)=>debounce((currentFile: NoleFile, content: string) => {
   if (currentFile) {
-    // console.debug("autosave", currentFile.path);
-    // console.debug("content", content);
     currentFile.write(content);
   }
 }, saveDelay);

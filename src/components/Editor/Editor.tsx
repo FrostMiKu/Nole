@@ -11,7 +11,7 @@ import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { EditorView } from "codemirror";
 import { EditorState } from "@codemirror/state";
-import { debounce, throttle } from "../../lib/utils";
+import { debounce, asyncThrottle } from "../../lib/utils";
 import { TypstDocument, compile } from "../../ipc/typst";
 import { Intent, Spinner } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -27,7 +27,7 @@ export const Editor = () => {
   const compileDebounced = useCallback(
     // throttle compile, debounce typing, convert to canvas
     debounce(
-      throttle(async (path: string, content: string): Promise<void> => {
+      asyncThrottle(async (path: string, content: string): Promise<void> => {
         try {
           setCompileStatus("compiling");
           const document = await compile(window.nole!.workspace()!, path, content);
