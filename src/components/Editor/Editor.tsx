@@ -53,7 +53,7 @@ export const Editor = () => {
     setCompileStatus("idle");
     if (currentFile !== null) {
       const typingExtension = getTypingExtension((content) => {
-        autosave(currentFile, content);
+        autosave(window.nole.config.autosave_delay)(currentFile, content);
         compileDebounced(currentFile.path, content);
       });
       const autocompletionExtension = getAutocompletionExtension(currentFile);

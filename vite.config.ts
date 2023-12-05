@@ -13,5 +13,8 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
-  }
+  },
+  define: {
+    "process.env.IS_PREACT": JSON.stringify("false"),
+  },
 }));

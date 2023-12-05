@@ -6,6 +6,8 @@ import { CurrentFileAtom } from "./lib/state";
 import { useAtom } from "jotai";
 import Ribbon from "./components/Ribbon";
 import { useEffect } from "react";
+import DevEventListener from "./DevEventListener";
+import Whiteboard from "./components/Whiteboard";
 
 function App() {
   const [currentFile, setCurrenFile] = useAtom(CurrentFileAtom);
@@ -48,7 +50,9 @@ function App() {
     case ".typ":
       workspace = <Editor />;
       break;
-
+    case ".excalidraw":
+      workspace = <Whiteboard />;
+      break;
     default:
       if (currentFile) {
         workspace = (
@@ -68,6 +72,7 @@ function App() {
         {workspace}
       </div>
       <ToastContainer />
+      {import.meta.env.DEV ? <DevEventListener /> : <></>}
     </div>
   );
 }

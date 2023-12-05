@@ -2,7 +2,7 @@ import { EventEmitter } from "@tauri-apps/api/shell";
 
 type NoleEvent = AppEvent | FileEvent;
 
-enum AppEvent {
+export enum AppEvent {
     Init = "app:init",
 }
 

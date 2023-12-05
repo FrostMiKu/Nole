@@ -55,13 +55,13 @@ export function getTypingExtension(fn: (content: string) => void) {
   });
 }
 
-export const autosave = debounce((currentFile: NoleFile, content: string) => {
+export const autosave = (saveDelay: number)=>debounce((currentFile: NoleFile, content: string) => {
   if (currentFile) {
-    // console.log("autosave", currentFile.path);
-    // console.log("content", content);
+    // console.debug("autosave", currentFile.path);
+    // console.debug("content", content);
     currentFile.write(content);
   }
-}, window.nole!.config.autosave_delay);
+}, saveDelay);
 
 export function getAutocompletionExtension(file: NoleFile) {
   // todo: add mutiparams selection, tab to select next
@@ -76,7 +76,7 @@ export function getAutocompletionExtension(file: NoleFile) {
       word.to,
       context.explicit
     ).catch((e) => {
-      console.log("autocomplete failed!", e);
+      console.debug("autocomplete failed!", e);
       return null;
     });
     if (complete === null) return null;

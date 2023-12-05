@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ResizeEntry, ResizeSensor } from "@blueprintjs/core";
 import { TypstDocument } from "../../../ipc/typst";
 import Page from "./Page";
@@ -24,7 +24,7 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
   });
 
   // debounce resize event
-  const handleResize = useCallback(debounce((entries: ResizeEntry[]) => {
+  const handleResize = debounce((entries: ResizeEntry[]) => {
     console.debug("render resize!");
     if (canvasList.length === 0) return;
     createCanvas(
@@ -34,7 +34,7 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
     ).then((e) => {
       setCanvasList(e);
     });
-  }, window.nole!.config.render_delay),[]);
+  }, window.nole!.config.render_delay);
 
   useEffect(() => {
     if (doc === null || (doc.frames.length === 0 && canvasList.length !== 0)) {

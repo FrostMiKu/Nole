@@ -4,6 +4,8 @@ import { FileEntry } from "@tauri-apps/api/fs";
 import { EventBus, FileEvent } from "./bus";
 import path from "path-browserify";
 
+type BinaryFileContents = Iterable<number> | ArrayLike<number> | ArrayBuffer;
+
 class File {
     // nole directory path
     private bus: EventBus;
@@ -11,7 +13,7 @@ class File {
     name: string;
     parent: string;
     extname?: string;
-    cache?: string|Uint8Array;
+    cache?: string|BinaryFileContents;
     constructor(bus:EventBus, filepath: string) {
         this.bus = bus;
         this.path = filepath;
@@ -20,6 +22,15 @@ class File {
         this.extname = p.ext;
         this.parent = p.dir;
         this.cache = undefined;
+    }
+
+    /** 
+    * Clone a file object without cache, 
+    * it's useful when you want to write a file in the promise.
+    * clone is cheap, it just copy the file path.
+    */
+    clone(): File {
+        return new File(this.bus, this.path);
     }
 
     async read(): Promise<string> {
@@ -52,7 +63,7 @@ class File {
         this.cache = content;
     }
 
-    async writeAsBinary(content: Uint8Array): Promise<void> {
+    async writeAsBinary(content: BinaryFileContents): Promise<void> {
         await fs.writeBinaryFile(this.path, content);
         this.bus.emit(FileEvent.FileWrittenBinary, this.path, content);
         this.cache = content;
@@ -77,7 +88,6 @@ export class FileManager {
         if (!filepath) {
             return Promise.reject("Invalid path.");
         }
-        console.log(filepath);
         if (await fs.exists(filepath)) {
             const file = new File(this.bus, filepath);
             this.bus.emit(FileEvent.FileOpened, file);            

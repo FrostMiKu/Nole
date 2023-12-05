@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "nole",
-    "version": "0.0.0"
+    "version": "0.1.1"
   },
   "tauri": {
     "allowlist": {
@@ -54,6 +54,8 @@
         "title": "Nólë",
         "width": 900,
         "height": 650,
+        "minWidth": 800,
+        "minHeight": 600,
         "fileDropEnabled": false
       }
     ]
