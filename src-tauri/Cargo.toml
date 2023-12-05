@@ -1,0 +1,37 @@
+[package]
+name = "nole"
+version = "0.0.0"
+description = "A Tauri App"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = [ "protocol-asset", "dialog-all", "fs-all", "path-all", "shell-open"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+typst = { git = "https://github.com/typst/typst", tag = "v0.9.0" }
+typst-library = { git = "https://github.com/typst/typst", tag = "v0.9.0" }
+typst-ide = { git = "https://github.com/typst/typst.git", tag = "v0.9.0" }
+comemo = "0.3"
+fontdb = { features = ["memmap", "fontconfig"] }
+chrono = "0.4.31"
+filetime = "0.2.22"
+same-file = "1.0.6"
+siphasher = "1.0.0"
+dirs = "5.0.1"
+tauri-plugin-context-menu = "0.5.0"
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+default = ["embed-fonts"]
+embed-fonts = []
