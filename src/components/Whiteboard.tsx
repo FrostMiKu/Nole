@@ -9,7 +9,7 @@ import {
 import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types";
 import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
-import RenameInputer from "./FileTree/RenameInputer";
+import OnceInputer from "./OnceInputer";
 import path from "path-browserify";
 
 function Whiteboard() {
@@ -88,9 +88,14 @@ function Whiteboard() {
       </WelcomeScreen>
       <Footer>
         {renameing ? (
-          <RenameInputer
+          <OnceInputer
+            className="w-full ml-2 h-10 select-text"
             filename={currentFile!.name}
             onRename={(newFilename) => {
+              if (newFilename === currentFile!.name || newFilename === "") {
+                setRenameing(false);
+                return;
+              }
               window.nole.fs
                 .move(
                   currentFile!.path,
@@ -105,7 +110,7 @@ function Whiteboard() {
             }}
           />
         ) : (
-          <div className="p-1 mx-2 w-full flex flex-row-reverse font-bold text-lg"
+          <div className="h-10 overflow-hidden w-full flex flex-row-reverse items-center font-bold text-lg"
           onDoubleClick={()=>{
             setRenameing(true);
           }}

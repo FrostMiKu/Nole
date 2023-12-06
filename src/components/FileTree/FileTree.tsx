@@ -16,7 +16,7 @@ import {
 import { showMenu } from "tauri-plugin-context-menu";
 import { DirContextMenu, FileContextMenu } from "./menu";
 import path from "path-browserify";
-import RenameInputer from "./RenameInputer";
+import OnceInputer from "../OnceInputer";
 import { UIEvent } from "../../lib/bus";
 
 type OnExpandFn = TreeProps["onExpand"];
@@ -169,9 +169,15 @@ const FileTree: React.FC = () => {
       if (node !== undefined) {
         const oldtitle = node.title;
         node.title = (
-          <RenameInputer
+          <OnceInputer
             filename={node.pathpoint}
             onRename={(newFilename) => {
+              if (newFilename === node.pathpoint || newFilename === "") {
+                node.title = oldtitle;
+                setTreeData([...tree]);
+                setEditPos(null);
+                return;
+              }
               const newpath = path.join(path.dirname(filepath), newFilename);
               window.nole!.fs.move(filepath, newpath).catch((e) => {
                 window.nole!.notify.error({ content: e as string });

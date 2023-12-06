@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from "react";
 interface FilenameProps {
   filename: string;
   onRename: (newFilename: string) => void;
+  className?: string;
 }
 
-const RenameInputer: React.FC<FilenameProps> = ({ filename, onRename }) => {
+const OnceInputer: React.FC<FilenameProps> = ({ filename, onRename, className }) => {
   const [value, setValue] = useState(filename);
   const inputerRef = useRef<HTMLInputElement>(null);
 
@@ -16,8 +17,9 @@ const RenameInputer: React.FC<FilenameProps> = ({ filename, onRename }) => {
   }, [inputerRef]);
 
   return (
+
     <input
-      className="w-full select-text"
+      className={className||"w-full select-text"}
       value={value}
       ref={inputerRef}
       onChange={(e) => {
@@ -32,8 +34,8 @@ const RenameInputer: React.FC<FilenameProps> = ({ filename, onRename }) => {
         }
       }}
       type="text"
-    />
+      />
   );
 };
 
-export default RenameInputer;
+export default OnceInputer;

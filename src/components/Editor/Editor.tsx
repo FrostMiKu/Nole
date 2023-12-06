@@ -15,7 +15,7 @@ import { debounce, asyncThrottle } from "../../lib/utils";
 import { TypstDocument, compile } from "../../ipc/typst";
 import { Intent, Spinner, Tooltip } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import RenameInputer from "../FileTree/RenameInputer";
+import OnceInputer from "../OnceInputer";
 import path from "path-browserify";
 
 export const Editor = () => {
@@ -123,9 +123,14 @@ export const Editor = () => {
     <div className="h-full flex flex-col gap-2">
       <div className="bg-slate-50 shadow-sm hover:shadow-lg h-8 px-4 mt-2 mx-2 rounded-lg flex flex-row justify-between items-center">
         {renameing ? (
-          <RenameInputer
+          <OnceInputer
+          className="w-full mr-2 select-text"
             filename={currentFile!.name}
             onRename={(newFilename) => {
+              if (newFilename === currentFile!.name || newFilename === "") {
+                setRenameing(false);
+                return;
+              }
               window.nole.fs
                 .move(
                   currentFile!.path,
