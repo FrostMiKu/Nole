@@ -6,7 +6,6 @@ mod ipc;
 
 use engine::TypstEngine;
 use std::sync::Arc;
-use tauri::Manager;
 
 fn main() {
     // let engine = Arc::new(TypstEngine::new());

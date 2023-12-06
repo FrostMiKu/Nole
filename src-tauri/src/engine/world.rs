@@ -10,12 +10,12 @@ use comemo::Prehashed;
 use filetime::FileTime;
 use same_file::Handle;
 use siphasher::sip128::{Hasher128, SipHasher13};
-use typst::diag::{FileError, FileResult, PackageResult, PackageError};
-use typst::eval::{eco_format, Bytes, Datetime, Library};
-use typst::font::{Font, FontBook};
+use typst::diag::{FileError, FileResult, PackageResult, PackageError, StrResult};
+use typst::foundations::{eco_format, Bytes, Datetime};
+use typst::Library;
+use typst::text::{Font, FontBook};
 use typst::syntax::{FileId, Source, VirtualPath, PackageSpec};
 use typst::World;
-use typst_library::prelude::EcoString;
 
 use super::TypstCore;
 
@@ -42,7 +42,7 @@ pub struct NoleWorld {
 
 impl NoleWorld {
     /// Create a new system world.
-    pub fn new(workspace: PathBuf, path: PathBuf, core: Arc<TypstCore>) -> Result<Self, EcoString> {
+    pub fn new(workspace: PathBuf, path: PathBuf, core: Arc<TypstCore>) -> StrResult<Self> {
    
         // Resolve the system-global root directory.
         let workspace = {

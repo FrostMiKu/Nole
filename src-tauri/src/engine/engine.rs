@@ -3,9 +3,9 @@ use std::sync::{Mutex, Arc};
 use crate::engine::{FontSearcher, FontSlot};
 use comemo::Prehashed;
 use typst::diag::StrResult;
-use typst::doc::Frame;
-use typst::{eval::Library, util::hash128};
-use typst::font::FontBook;
+use typst::layout::Frame;
+use typst::{Library, util::hash128};
+use typst::text::FontBook;
 
 use super::NoleWorld;
 
@@ -50,7 +50,7 @@ impl TypstCore {
         searcher.search(&[]);
 
         Self {
-            library: Prehashed::new(typst_library::build()),
+            library: Prehashed::new(Library::build()),
             fontbook: Prehashed::new(searcher.book),
             fonts: searcher.fonts,
         }

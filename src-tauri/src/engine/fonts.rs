@@ -3,7 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use fontdb::{Database, Source};
-use typst::font::{Font, FontBook, FontInfo};
+use typst::text::{Font, FontBook, FontInfo};
 
 
 /// Searches for fonts.
@@ -88,7 +88,7 @@ impl FontSearcher {
     #[cfg(feature = "embed-fonts")]
     fn add_embedded(&mut self) {
         let mut process = |bytes: &'static [u8]| {
-            let buffer = typst::eval::Bytes::from_static(bytes);
+            let buffer = typst::foundations::Bytes::from_static(bytes);
             for (i, font) in Font::iter(buffer).enumerate() {
                 self.book.push(font.info().clone());
                 self.fonts.push(FontSlot {

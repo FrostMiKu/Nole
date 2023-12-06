@@ -45,7 +45,7 @@ pub async fn autocomplete(
     let source = world.source(source_id).map_err(|err| err.to_string())?;
 
     let (completed_offset, completions) =
-        typst_ide::autocomplete(world, &[], &source, offset, explicit)
+        typst_ide::autocomplete(world, None, &source, offset, explicit)
             .ok_or("Failed to perform autocomplete".to_string())?;
     // recalc offest for chinese character
     let completed_char_offset = content.clone()[..completed_offset].chars().count();
@@ -108,7 +108,7 @@ pub async fn compile(
                         continue;
                     }
                 }
-                outputs.push((i, typst::export::svg(frame)));
+                outputs.push((i, typst_svg::svg(frame)));
             }
 
             // Assume all pages have the same size
