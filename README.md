@@ -9,3 +9,5 @@ Note! run it before build!
 cp -r node_modules/@excalidraw/excalidraw/dist/excalidraw-assets public/
 cp -r node_modules/@excalidraw/excalidraw/dist/excalidraw-assets-dev public/
 ```
+
+
