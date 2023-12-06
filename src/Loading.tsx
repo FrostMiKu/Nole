@@ -6,6 +6,7 @@ import { AppInitializedAtom, CurrentFileAtom } from "./lib/state";
 import { useCallback, useEffect } from "react";
 import { AnchorButton } from "@blueprintjs/core";
 import { throttle } from "./lib/utils";
+import { exists } from "@tauri-apps/api/fs";
 
 function Loading() {
   const [appInitialized, setAppInitialized] = useAtom(AppInitializedAtom);
@@ -27,9 +28,15 @@ function Loading() {
   useEffect(() => {
     const path = localStorage.getItem("workspace");
     if (path) {
-      console.log("workspace: ", path);
-      new Nole(path);
-      setAppInitialized(true);
+      exists(path).then((exist) => {
+        if (!exist) {
+          localStorage.removeItem("workspace");
+          return;
+        }else{
+          new Nole(path);
+          setAppInitialized(true);
+        }
+      });
     }
   }, []);
 

@@ -34,7 +34,10 @@ function Whiteboard() {
       });    
     });
     currentFile.readAsBinary().then((buffer) => {
-      if (buffer.length === 0) return;
+      if (buffer.length === 0) {
+        excalidrawAPI.resetScene();
+        return;
+      }
       const blob = new Blob([buffer], {type: "image/png"});
       loadFromBlob(blob, null, null).then((data) => {
         excalidrawAPI.updateScene(data);
@@ -67,7 +70,7 @@ function Whiteboard() {
         <WelcomeScreen.Hints.HelpHint />
         <WelcomeScreen.Hints.MenuHint />
         <WelcomeScreen.Center>
-          <WelcomeScreen.Center.Logo />
+          {/* <WelcomeScreen.Center.Logo /> */}
           <WelcomeScreen.Center.Heading>
             Nólë Whiteboard
           </WelcomeScreen.Center.Heading>
