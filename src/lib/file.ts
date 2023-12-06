@@ -13,7 +13,7 @@ class File {
   filename: string;
   name: string;
   parent: string;
-  extname?: string;
+  extname: string; // no extname will be set ""
   cache?: string | BinaryFileContents;
   constructor(bus: EventBus, filepath: string) {
     this.bus = bus;

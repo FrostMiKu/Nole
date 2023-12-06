@@ -57,7 +57,8 @@ function Ribbon(): JSX.Element {
       <div className="h-full"></div>
       <Button
         key="switch workspace"
-        icon="book"
+        title="switch workspace"
+        icon="control"
         onClick={() => {
           localStorage.removeItem("workspace");
           setAppInitialized(false);
@@ -65,6 +66,7 @@ function Ribbon(): JSX.Element {
       />
       <Button
         key="setting"
+        title="setting"
         icon="settings"
         onClick={() => {
           window.nole!.notify.warn({ content: "Setting: todo..." });

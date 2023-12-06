@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "nole",
-    "version": "0.1.2"
+    "version": "0.1.5"
   },
   "tauri": {
     "allowlist": {

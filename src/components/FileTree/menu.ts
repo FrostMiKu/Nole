@@ -57,7 +57,11 @@ export const DirContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
   },
   {
     label: "Rename",
-    event: () => {
+    event: () => {      
+      if (node.pos === "0-0") {
+        window.nole.notify.warn({content:"Workspace root node can not rename!"})
+        return
+      }
       setEditPos(node.pos);
     },
   },

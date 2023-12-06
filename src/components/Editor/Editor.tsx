@@ -13,13 +13,17 @@ import { EditorView } from "codemirror";
 import { EditorState } from "@codemirror/state";
 import { debounce, asyncThrottle } from "../../lib/utils";
 import { TypstDocument, compile } from "../../ipc/typst";
-import { Intent, Spinner } from "@blueprintjs/core";
+import { Intent, Spinner, Tooltip } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import RenameInputer from "../FileTree/RenameInputer";
+import path from "path-browserify";
 
 export const Editor = () => {
   const [currentFile, _] = useAtom(CurrentFileAtom);
+  const [renameing, setRenameing] = useState<boolean>(false);
   const [editor, setEditor] = useState<EditorView | null>(null);
   const [doc, setDoc] = useState<TypstDocument | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [compileStatus, setCompileStatus] = useState<
     "idle" | "compiling" | "done" | "error"
   >("idle");
@@ -30,18 +34,25 @@ export const Editor = () => {
       asyncThrottle(async (path: string, content: string): Promise<void> => {
         try {
           setCompileStatus("compiling");
-          const document = await compile(window.nole!.workspace()!, path, content);
+          const document = await compile(
+            window.nole!.workspace()!,
+            path,
+            content
+          );
           if (document.frames.length === 0) {
             setCompileStatus("idle");
+            setErrorMsg(null);
             return Promise.resolve();
           }
           setDoc(document);
         } catch (error) {
-          window.nole!.notify.error({ content: error as string });
+          setErrorMsg(error as string);
+          // window.nole!.notify.error({ content: error as string });
           setCompileStatus("error");
           return Promise.reject(error);
         }
         setCompileStatus("done");
+        setErrorMsg(null);
         return Promise.resolve();
       }),
       window.nole!.config.compile_delay
@@ -91,15 +102,53 @@ export const Editor = () => {
   } else if (compileStatus === "done") {
     status = <span className="text-green-500">Compiled</span>;
   } else if (compileStatus === "error") {
-    status = <span className="text-red-500">Error</span>;
+    status = (
+      <span className="text-red-500">
+        {errorMsg ? (
+          <Tooltip
+            defaultIsOpen={true}
+            position="bottom"
+            content={errorMsg}
+          >
+            Error
+          </Tooltip>
+        ) : (
+          "Error"
+        )}
+      </span>
+    );
   }
 
   return (
     <div className="h-full flex flex-col gap-2">
       <div className="bg-slate-50 shadow-sm hover:shadow-lg h-8 px-4 mt-2 mx-2 rounded-lg flex flex-row justify-between items-center">
-        <h3 className="font-medium text-lg max-w-xs overflow-hidden">
-          {currentFile?.name}
-        </h3>
+        {renameing ? (
+          <RenameInputer
+            filename={currentFile!.name}
+            onRename={(newFilename) => {
+              window.nole.fs
+                .move(
+                  currentFile!.path,
+                  path.join(
+                    currentFile!.parent,
+                    newFilename + currentFile!.extname
+                  )
+                ).catch((e) => {
+                  window.nole!.notify.error({ content: e as string });
+                })
+                .finally(() => setRenameing(false));
+            }}
+          />
+        ) : (
+          <h3
+            className="font-medium text-lg max-w-xs overflow-hidden"
+            onDoubleClick={() => {
+              setRenameing(true);
+            }}
+          >
+            {currentFile?.name}
+          </h3>
+        )}
         {status}
       </div>
       <PanelGroup direction="horizontal" className="bg-white px-2 pb-2">
