@@ -1,13 +1,19 @@
 type DebouncedFunction<F extends (...args: any[]) => any> = (
   ...args: Parameters<F>
-) => void;
+) => ()=>void;
+/**
+ * debounce function
+ * @param func function
+ * @param delay time delay
+ * @returns debounced function they will return a cancel function
+ */
 export function debounce<F extends (...args: any[]) => any>(
   func: F,
   delay: number
 ): DebouncedFunction<F> {
   let timerId: number | null;
 
-  return function (...args: Parameters<F>): void {
+  return function (...args: Parameters<F>) {
     if (timerId) {
       clearTimeout(timerId);
     }
@@ -16,6 +22,12 @@ export function debounce<F extends (...args: any[]) => any>(
       func(...args);
       timerId = null;
     }, delay);
+    return ()=>{
+      if (timerId) {
+        clearTimeout(timerId);
+        timerId = null;
+      }
+    }
   };
 }
 

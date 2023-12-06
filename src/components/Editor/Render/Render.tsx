@@ -34,7 +34,7 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
     ).then((e) => {
       setCanvasList(e);
     });
-  }, window.nole!.config.render_delay);
+  }, window.nole!.config.resize_render_delay);
 
   useEffect(() => {
     if (doc === null || (doc.frames.length === 0 && canvasList.length !== 0)) {

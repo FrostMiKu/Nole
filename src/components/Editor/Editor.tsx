@@ -24,48 +24,66 @@ export const Editor = () => {
   const [editor, setEditor] = useState<EditorView | null>(null);
   const [doc, setDoc] = useState<TypstDocument | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [debounceCancelFn, setDebounceCancelFn] = useState<(() => void) | null>(
+    null
+  );
   const [compileStatus, setCompileStatus] = useState<
     "idle" | "compiling" | "done" | "error"
   >("idle");
 
-  const compileDebounced = useCallback(
-    // throttle compile, debounce typing, convert to canvas
-    debounce(
-      asyncThrottle(async (path: string, content: string): Promise<void> => {
-        try {
-          setCompileStatus("compiling");
-          const document = await compile(
-            window.nole!.workspace()!,
-            path,
-            content
-          );
-          if (document.frames.length === 0) {
-            setCompileStatus("idle");
-            setErrorMsg(null);
-            return Promise.resolve();
-          }
-          setDoc(document);
-        } catch (error) {
-          setErrorMsg(error as string);
-          // window.nole!.notify.error({ content: error as string });
-          setCompileStatus("error");
-          return Promise.reject(error);
+  const compileThrottled = useCallback(
+    asyncThrottle(async (path: string, content: string): Promise<void> => {
+      console.log("called");
+
+      try {
+        setCompileStatus("compiling");
+        const document = await compile(
+          window.nole!.workspace()!,
+          path,
+          content
+        );
+        if (document.frames.length === 0) {
+          setCompileStatus("idle");
+          setErrorMsg(null);
+          return Promise.resolve();
         }
-        setCompileStatus("done");
-        setErrorMsg(null);
-        return Promise.resolve();
-      }),
-      window.nole!.config.compile_delay
-    ),
+        setDoc(document);
+      } catch (error) {
+        setErrorMsg(error as string);
+        // window.nole!.notify.error({ content: error as string });
+        setCompileStatus("error");
+        return Promise.reject(error);
+      }
+      setCompileStatus("done");
+      setErrorMsg(null);
+      return Promise.resolve();
+    }),
     []
   );
+
+  const compileDebounced = useCallback(
+    // throttle compile, debounce typing, convert to canvas
+    debounce(compileThrottled, window.nole!.config.compile_delay),
+    [compileThrottled]
+  );
+
+  // cancel last file compile debounce on file change
+  useEffect(() => {
+    if (debounceCancelFn) {
+      debounceCancelFn();
+      setDebounceCancelFn(null);
+    }
+  }, [currentFile]);
+
+  const autoSave = useCallback(autosave(window.nole.config.autosave_delay), []);
 
   useEffect(() => {
     setCompileStatus("idle");
     if (currentFile !== null) {
       const typingExtension = getTypingExtension((content) => {
-        autosave(window.nole.config.autosave_delay)(currentFile, content);
-        compileDebounced(currentFile.path, content);
+        autoSave(currentFile, content);
+        const cancelFN = compileDebounced(currentFile.path, content);
+        setDebounceCancelFn(() => cancelFN);
       });
       const autocompletionExtension = getAutocompletionExtension(currentFile);
       currentFile
@@ -82,7 +100,7 @@ export const Editor = () => {
             })
           );
           // compile on open
-          compileDebounced(currentFile.path, e);
+          compileThrottled(currentFile.path, e);
         })
         .catch((e) => {
           window.nole!.notify.error({ content: e as string });
@@ -90,7 +108,7 @@ export const Editor = () => {
     }
   }, [currentFile, editor]);
 
-  let status = <></>;
+  let status = <span className="text-green-500">Cached</span>;
   if (compileStatus === "compiling") {
     status = (
       <Spinner
@@ -105,11 +123,7 @@ export const Editor = () => {
     status = (
       <span className="text-red-500">
         {errorMsg ? (
-          <Tooltip
-            defaultIsOpen={true}
-            position="bottom"
-            content={errorMsg}
-          >
+          <Tooltip defaultIsOpen={true} position="bottom" content={errorMsg}>
             Error
           </Tooltip>
         ) : (
@@ -124,7 +138,7 @@ export const Editor = () => {
       <div className="bg-slate-50 shadow-sm hover:shadow-lg h-8 px-4 mt-2 mx-2 rounded-lg flex flex-row justify-between items-center">
         {renameing ? (
           <OnceInputer
-          className="w-full mr-2 select-text"
+            className="w-full mr-2 select-text"
             filename={currentFile!.name}
             onRename={(newFilename) => {
               if (newFilename === currentFile!.name || newFilename === "") {
@@ -138,7 +152,8 @@ export const Editor = () => {
                     currentFile!.parent,
                     newFilename + currentFile!.extname
                   )
-                ).catch((e) => {
+                )
+                .catch((e) => {
                   window.nole!.notify.error({ content: e as string });
                 })
                 .finally(() => setRenameing(false));

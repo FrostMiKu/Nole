@@ -1,12 +1,11 @@
 export interface AppConfig {
-    // note root path
-    render_delay: number;
+    resize_render_delay: number;
     compile_delay: number;
     autosave_delay: number;
 }
 
 export const default_config = {
-    render_delay: 200,
-    compile_delay: 200,
-    autosave_delay: 200,
+    resize_render_delay: 200,
+    compile_delay: 1000,
+    autosave_delay: 1000,
 } as AppConfig;
