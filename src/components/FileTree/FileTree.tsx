@@ -216,7 +216,6 @@ const FileTree: React.FC = () => {
         }}
         onDrop={onDrop}
         onRightClick={({ node }) => {
-          console.log(node);
           showMenu({
             items: node.isLeaf
               ? FileContextMenu({ node, treeData, setEditPos })

@@ -36,8 +36,8 @@ function App() {
       })
     );
     return () => {
-      disposers.forEach((disposer) => disposer());      
-      window.nole!.clearCache()
+      disposers.forEach((disposer) => disposer());
+      window.nole!.clearCache();
     };
   }, [currentFile]);
 
@@ -59,6 +59,8 @@ function App() {
     case ".jpeg":
     case ".bmp":
     case ".gif":
+    case ".webp":
+    case ".svg":
       workspace = <PictureViewer />;
       break;
     default:
