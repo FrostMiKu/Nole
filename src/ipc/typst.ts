@@ -1,24 +1,17 @@
 import { invoke } from "@tauri-apps/api"
-// import type { Completion } from "@codemirror/autocomplete";
 
-export const clearCache = (): Promise<void> => {
-    return invoke("clear_cache", {});
-}
-
-export interface TypstDocument {
-    n_pages: number,
-    frames: [number,string][],
+export interface TypstRenderResult {
+    frame: string,
     width: number,
     height: number,
 }
 
-export const compile = (workspace:string, path:string, content:string): Promise<TypstDocument> => {    
-    return invoke("compile", {"workspace": workspace, "path": path, "content": content});
+export interface TypstCompileResult {
+    updated_idx: number[],
+    n_pages: number,
+    width: number,
+    height: number,
 }
-
-// export interface TypstCompileResult {
-
-// }
 
 interface Completion {
     label: string;
@@ -32,6 +25,14 @@ interface CompletionResult {
     offset: number;
 }
 
-export const autocomplete = (path:string, content:string, offset:number, explicit:boolean):Promise<CompletionResult> => {
+export const compile = async (workspace:string, path:string, content:string): Promise<TypstCompileResult> => {    
+    return invoke("compile", {"workspace": workspace, "path": path, "content": content});
+}
+
+export const render = async (page:number, scale:number): Promise<TypstRenderResult> => {
+    return invoke("render", {"page": page, "scale": scale});
+}
+
+export const autocomplete = async (path:string, content:string, offset:number, explicit:boolean):Promise<CompletionResult> => {
     return invoke("autocomplete", {"path": path, "content": content, "offset": offset, "explicit":explicit});
 }

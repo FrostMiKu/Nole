@@ -1,10 +1,11 @@
+use base64::{engine::general_purpose, Engine as _};
 use serde::Serialize;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::Arc;
-use typst::diag::StrResult;
 use typst::eval::Tracer;
 use typst::World;
+use typst::{diag::StrResult, visualize::Color};
 use typst_ide::Completion;
 
 use crate::engine::{NoleWorld, TypstEngine};
@@ -15,10 +16,17 @@ pub struct TypstCompleteResponse {
     completions: Vec<Completion>,
 }
 
-#[derive(Serialize, Clone, Debug)]
-pub struct TypstDocument {
+#[derive(Serialize, Debug)]
+pub struct TypstCompileResponse {
+    pub updated_idx: Vec<usize>,
     pub n_pages: usize,
-    pub frames: Vec<(usize, String)>,
+    pub width: f64,
+    pub height: f64,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct TypstRenderResponse {
+    pub frame: String,
     pub width: f64,
     pub height: f64,
 }
@@ -33,16 +41,17 @@ pub async fn autocomplete(
     explicit: bool,
 ) -> StrResult<TypstCompleteResponse> {
     let world = engine.world_cache.lock().expect("get world lock failed!");
+    let world = world.as_ref().ok_or("World not initialized!".to_string())?;
+    let source_id = world.file_id(&path)?;
+    world.virtual_source(source_id, content.to_string())?;
+    let source = world.source(source_id).map_err(|err| err.to_string())?;
+
     // recalc offest for chinese character
     let offset = content
         .char_indices()
         .nth(offset)
         .map(|a| a.0)
         .unwrap_or(content.len());
-    let world = world.as_ref().ok_or("World not initialized!".to_string())?;
-    let source_id = world.file_id(&path)?;
-    world.virtual_source(source_id, content.to_string())?;
-    let source = world.source(source_id).map_err(|err| err.to_string())?;
 
     let (completed_offset, completions) =
         typst_ide::autocomplete(world, None, &source, offset, explicit)
@@ -57,11 +66,6 @@ pub async fn autocomplete(
     // completions
 }
 
-#[tauri::command]
-pub async fn clear_cache(engine: tauri::State<'_, Arc<TypstEngine>>) -> StrResult<()> {
-    engine.reset_document_cache()
-}
-
 /// Compile a single time.
 ///
 /// Returns whether it compiled without errors.
@@ -71,7 +75,7 @@ pub async fn compile(
     workspace: PathBuf,
     path: PathBuf,
     content: String,
-) -> StrResult<TypstDocument> {
+) -> StrResult<TypstCompileResponse> {
     let start = std::time::Instant::now();
     let mut world = engine
         .world_cache
@@ -92,34 +96,32 @@ pub async fn compile(
         Ok(document) => {
             let duration = start.elapsed();
             println!("Compile duration: {:?}", duration);
-            let mut outputs: Vec<(usize, String)> = vec![];
+            let mut updated_idx: Vec<usize> = vec![];
             for (i, frame) in document.pages.iter().enumerate() {
                 {
                     // If the frame is in the cache, skip it.
-                    if engine
-                        .document_cache
-                        .lock()
-                        .expect("Can not lock cache!")
-                        .is_cached(i, frame)
-                    {
-                        continue; // todo: the cache cause the image not update
+                    if world.export_cache().is_cached(i, frame) {
+                        continue;
                     }
                 }
-                outputs.push((i, typst_svg::svg(frame)));
+                updated_idx.push(i);
             }
-
-            // Assume all pages have the same size
-            // TODO: Improve this?
             let first_page = &document.pages[0];
             let width = first_page.width();
             let height = first_page.height();
+            let n_pages = document.pages.len();
+            engine
+                .document_cache
+                .write()
+                .map_err(|_| "Write document failed!")?
+                .replace(document);
 
-            return Ok(TypstDocument {
+            Ok(TypstCompileResponse {
+                updated_idx,
+                n_pages,
                 width: width.to_pt(),
                 height: height.to_pt(),
-                frames: outputs,
-                n_pages: document.pages.len(),
-            });
+            })
         }
 
         // Print diagnostics.
@@ -128,6 +130,35 @@ pub async fn compile(
             return Err(errors.deref()[0].message.as_str().to_string().into());
         }
     }
+}
+
+/// Returns whether it render without errors.
+#[tauri::command]
+pub async fn render(
+    engine: tauri::State<'_, Arc<TypstEngine>>,
+    page: usize,
+    scale: f32,
+) -> Result<TypstRenderResponse, String> {
+    let document = engine
+        .document_cache
+        .read()
+        .map_err(|_| "Read document failed!")?;
+    let now = std::time::Instant::now();
+    let frame = document.as_ref().ok_or("Document not initialized!")?.pages[page].clone();
+    let bmp = typst_render::render(&frame, scale, Color::WHITE);
+    let elapsed = now.elapsed();
+    println!("Render page {:?} duration: {:?}", page, elapsed);
+    return bmp
+        .encode_png()
+        .map_err(|err| err.to_string())
+        .map(|image| {
+            let b64 = general_purpose::STANDARD.encode(image);
+            TypstRenderResponse {
+                frame: b64,
+                width: frame.width().to_pt(),
+                height: frame.height().to_pt(),
+            }
+        });
 }
 
 // Export into the target format.

@@ -37,9 +37,8 @@ function App() {
     );
     return () => {
       disposers.forEach((disposer) => disposer());
-      window.nole!.clearCache();
     };
-  }, [currentFile]);
+  }, []);
 
   let workspace = (
     <div className="w-full h-full flex justify-center items-center text-2xl text-gray-400">
@@ -49,10 +48,10 @@ function App() {
 
   switch (currentFile?.extname) {
     case ".typ":
-      workspace = <Editor />;
+      workspace = <Editor key={currentFile.path} />; // key: force rerender for different files
       break;
     case ".draw":
-      workspace = <Whiteboard />;
+      workspace = <Whiteboard key={currentFile.path} />;
       break;
     case ".png":
     case ".jpg":

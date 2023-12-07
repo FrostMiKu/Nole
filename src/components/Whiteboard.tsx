@@ -5,6 +5,7 @@ import {
   WelcomeScreen,
   exportToBlob,
   loadFromBlob,
+  getSceneVersion
 } from "@excalidraw/excalidraw";
 import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types";
 import { useAtom } from "jotai";
@@ -74,13 +75,16 @@ function Whiteboard() {
         },
       }}
       excalidrawAPI={(api) => setExcalidrawAPI(api)}
+      onChange={(elements, appState, files)=>{
+        console.log(getSceneVersion(elements));
+        
+      }}
     >
       <WelcomeScreen>
         <WelcomeScreen.Hints.ToolbarHint />
         <WelcomeScreen.Hints.HelpHint />
         <WelcomeScreen.Hints.MenuHint />
         <WelcomeScreen.Center>
-          {/* <WelcomeScreen.Center.Logo /> */}
           <WelcomeScreen.Center.Heading>
             Nólë Whiteboard
           </WelcomeScreen.Center.Heading>

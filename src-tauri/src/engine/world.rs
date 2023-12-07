@@ -9,9 +9,11 @@ use comemo::Prehashed;
 use typst::diag::{FileError, FileResult, PackageResult, PackageError, StrResult};
 use typst::foundations::{eco_format, Bytes, Datetime};
 use typst::Library;
+use typst::layout::Frame;
 use typst::text::{Font, FontBook};
 use typst::syntax::{FileId, Source, VirtualPath, PackageSpec};
 use typst::World;
+use typst::util::hash128;
 
 use super::TypstCore;
 
@@ -30,6 +32,8 @@ pub struct NoleWorld {
     /// The current datetime if requested. This is stored here to ensure it is
     /// always the same within one compilation. Reset between compilations.
     now: OnceCell<DateTime<Local>>,
+    /// The export cache.
+    export_cache: ExportCache,
 }
 
 impl NoleWorld {
@@ -60,6 +64,7 @@ impl NoleWorld {
                 main: FileId::new(None, main_path),
                 slots: RefCell::default(),
                 now: OnceCell::new(),
+                export_cache: ExportCache::new(),
             }
         )
     }
@@ -108,6 +113,11 @@ impl NoleWorld {
         let vpath = VirtualPath::within_root(path, &self.root)
             .ok_or("input file must be contained in project root")?;
         Ok(FileId::new(None, vpath))
+    }
+
+    /// Gets access to the export cache.
+    pub fn export_cache(&mut self) -> &mut ExportCache {
+        &mut self.export_cache
     }
 }
 
@@ -340,4 +350,37 @@ pub fn prepare_package(spec: &PackageSpec) -> PackageResult<PathBuf> {
     }
 
     Err(PackageError::NotFound(spec.clone()))
+}
+
+
+/// Caches exported files so that we can avoid re-exporting them if they haven't
+/// changed.
+///
+/// This is done by having a list of size `files.len()` that contains the hashes
+/// of the last rendered frame in each file. If a new frame is inserted, this
+/// will invalidate the rest of the cache, this is deliberate as to decrease the
+/// complexity and memory usage of such a cache.
+pub struct ExportCache {
+    /// The hashes of last compilation's frames.
+    pub cache: Vec<u128>,
+}
+
+impl ExportCache {
+    /// Creates a new export cache.
+    pub fn new() -> Self {
+        Self { cache: Vec::with_capacity(32) }
+    }
+
+    /// Returns true if the entry is cached and appends the new hash to the
+    /// cache (for the next compilation).
+    pub fn is_cached(&mut self, i: usize, frame: &Frame) -> bool {
+        let hash = hash128(frame);
+
+        if i >= self.cache.len() {
+            self.cache.push(hash);
+            return false;
+        }
+
+        std::mem::replace(&mut self.cache[i], hash) == hash
+    }
 }

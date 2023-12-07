@@ -2243,6 +2243,7 @@ checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 name = "nole"
 version = "0.2.0"
 dependencies = [
+ "base64 0.21.5",
  "chrono",
  "comemo",
  "dirs",
@@ -2257,7 +2258,7 @@ dependencies = [
  "tauri-plugin-context-menu",
  "typst",
  "typst-ide",
- "typst-svg",
+ "typst-render",
 ]
 
 [[package]]
@@ -2640,6 +2641,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
+name = "pixglyph"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f67591f21f6668e63c1cd85adab066ac8a92bc7b962668dd8042197a6e4b8f8f"
+dependencies = [
+ "ttf-parser",
+]
+
+[[package]]
 name = "pkg-config"
 version = "0.3.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2989,6 +2999,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
 
 [[package]]
+name = "resvg"
+version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc7980f653f9a7db31acff916a262c3b78c562919263edea29bf41a056e20497"
+dependencies = [
+ "gif",
+ "jpeg-decoder",
+ "log",
+ "pico-args",
+ "png",
+ "rgb",
+ "svgtypes",
+ "tiny-skia",
+ "usvg",
+]
+
+[[package]]
 name = "rfd"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3010,6 +3037,15 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "windows 0.37.0",
+]
+
+[[package]]
+name = "rgb"
+version = "0.8.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05aaa8004b64fd573fc9d002f4e632d51ad4f026c2b5ba95fcb6c2f32c2c47d8"
+dependencies = [
+ "bytemuck",
 ]
 
 [[package]]
@@ -3929,6 +3965,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "tiny-skia"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6a067b809476893fce6a254cf285850ff69c847e6cfbade6a20b655b6c7e80d"
+dependencies = [
+ "arrayref",
+ "arrayvec",
+ "bytemuck",
+ "cfg-if",
+ "log",
+ "png",
+ "tiny-skia-path",
+]
+
+[[package]]
 name = "tiny-skia-path"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4212,19 +4263,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "typst-svg"
+name = "typst-render"
 version = "0.10.0"
 source = "git+https://github.com/typst/typst.git?tag=v0.10.0#70ca0d257bb4ba927f63260e20443f244e0bb58c"
 dependencies = [
- "base64 0.21.5",
+ "bytemuck",
  "comemo",
- "ecow",
  "flate2",
- "tracing",
+ "image",
+ "pixglyph",
+ "resvg",
+ "roxmltree",
+ "tiny-skia",
  "ttf-parser",
  "typst",
- "xmlparser",
- "xmlwriter",
+ "usvg",
 ]
 
 [[package]]

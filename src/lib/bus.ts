@@ -4,6 +4,7 @@ type NoleEvent = AppEvent | FileEvent | UIEvent;
 
 export enum AppEvent {
     Init = "app:init",
+    // Compiled = "app:compiled",
 }
 
 export enum UIEvent {

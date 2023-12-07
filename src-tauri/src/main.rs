@@ -5,6 +5,7 @@ mod engine;
 mod ipc;
 
 use engine::TypstEngine;
+use tauri::Manager;
 use std::sync::Arc;
 
 fn main() {
@@ -12,21 +13,21 @@ fn main() {
     let engine = Arc::new(TypstEngine::new());
 
     tauri::Builder::default()
-        // .setup(|app| {
-        //     #[cfg(debug_assertions)] // only include this code on debug builds
-        //     {
-        //         let window = app.get_window("main").unwrap();
-        //         window.open_devtools();
-        //         //   window.close_devtools();
-        //     }
-        //     Ok(())
-        // })
+        .setup(|app| {
+            #[cfg(debug_assertions)] // only include this code on debug builds
+            {
+                let window = app.get_window("main").unwrap();
+                window.open_devtools();
+                //   window.close_devtools();
+            }
+            Ok(())
+        })
         .plugin(tauri_plugin_context_menu::init())
         .manage(engine)
         .invoke_handler(tauri::generate_handler![
             ipc::compile,
+            ipc::render,
             ipc::autocomplete,
-            ipc::clear_cache,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

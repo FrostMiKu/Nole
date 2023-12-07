@@ -1,76 +1,71 @@
-import { useEffect, useRef, useState } from "react";
-import { ResizeEntry, ResizeSensor } from "@blueprintjs/core";
-import { TypstDocument } from "../../../ipc/typst";
-import Page from "./Page";
-import { createCanvas, debounce } from "../../../lib/utils";
+import { useCallback, useEffect, useRef, useState } from "react";
+// import { ResizeEntry, ResizeSensor } from "@blueprintjs/core";
+import { TypstCompileResult } from "../../../ipc/typst";
+import Page, { PageProps } from "./Page";
 import { randomString } from "remeda";
-
-let aspect = 0;
+import { ResizeEntry, ResizeSensor } from "@blueprintjs/core";
+import { debounce } from "../../../lib/utils";
+// import Page from "./Page";
+// import { createCanvas, debounce } from "../../../lib/utils";
+// import { randomString } from "remeda";
 
 export interface RenderProps {
-  doc: TypstDocument | null;
+  doc: TypstCompileResult | null;
 }
 
 const Render: React.FC<RenderProps> = ({ doc }) => {
-  const [canvasList, setCanvasList] = useState<HTMLCanvasElement[]>([]);
-  const [savedScrollPosition, setSavedScrollPosition] = useState(20);
-  const renderRef = useRef<HTMLDivElement>(null);  
+  const renderRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState<number>(1.5); // todo: [1, 2, 3, 4, 5]
+  const [pages, setPages] = useState<PageProps[]>([]);
+  const [renderWidth, setRenderWidth] = useState<number | null>(null);
 
-  // restore scroll position
-  useEffect(() => {
-    if (renderRef.current) {
-      renderRef.current.scrollTop = savedScrollPosition;
-    }
-  });
-
-  // debounce resize event
-  const handleResize = debounce((entries: ResizeEntry[]) => {
-    console.debug("render resize!");
-    if (canvasList.length === 0) return;
-    createCanvas(
-      window.nole!.framesCache.getPages(canvasList.length),
-      aspect,
-      entries[0].contentRect.width
-    ).then((e) => {
-      setCanvasList(e);
-    });
-  }, window.nole!.config.resize_render_delay);
+  const onResizeDebounced = useCallback(
+    debounce((entries: ResizeEntry[]) => {
+      console.log("resize", renderWidth, "==>", entries[0].contentRect.width);
+      setRenderWidth(entries[0].contentRect.width);
+    }, window.nole.config.resize_render_delay),
+    []
+  );
 
   useEffect(() => {
-    if (doc === null || (doc.frames.length === 0 && canvasList.length !== 0)) {
-      return;
+    console.log(doc?.updated_idx);
+    if (!doc) return;
+    const newPages = [...pages];
+    if (doc.n_pages > pages.length) {
+      for (let i = pages.length; i < doc.n_pages; i++) {
+        newPages.push({
+          update: randomString(6),
+          page: i,
+          scale: scale,
+        });
+      }
+    } else if (doc.n_pages < pages.length) {
+      newPages.splice(doc.n_pages, pages.length - doc.n_pages);
     }
-    // const l = doc?.frames.length;
-    // console.log("当前文档页数为",l);
-    // console.log("当前刷新页面为第",doc?.frames[l-1][0]+1);
-    aspect = doc.height / doc.width;
-    for (const i of doc.frames) {
-      window.nole!.framesCache.set(i[0], i[1]);
+    // force re-render updated pages
+    for (const idx of doc.updated_idx) {
+      newPages[idx].update = randomString(6);
     }
-    createCanvas(
-      window.nole!.framesCache.getPages(doc.n_pages),
-      aspect,
-      renderRef.current!.clientWidth - 16
-    ).then((e) => {
-      setCanvasList(e);
-    });
+    setPages(newPages);
   }, [doc]);
 
   return (
-    <ResizeSensor targetRef={renderRef} onResize={handleResize}>
+    <ResizeSensor targetRef={renderRef} onResize={onResizeDebounced}>
       <div
         ref={renderRef}
-        onScroll={(e) => {     
-          if (e.currentTarget.scrollTop === 0) {
-            return;
-          }
-          setSavedScrollPosition(e.currentTarget.scrollTop);
-        }}
-        className="p-2 rounded-lg bg-slate-50 w-full h-full flex flex-col gap-4 overflow-auto"
+        className="p-2 rounded-lg bg-slate-50 w-full h-full flex flex-col gap-4 items-center overflow-auto"
       >
-        {canvasList.map((c) => (
-          <Page canvas={c} key={randomString(6)} />
-        ))}
+        {pages.map((item) => {
+          return (
+            <Page
+              key={item.page}
+              page={item.page}
+              update={item.update}
+              scale={scale}
+              width={renderWidth ? renderWidth : undefined}
+            />
+          );
+        })}
       </div>
     </ResizeSensor>
   );

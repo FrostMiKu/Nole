@@ -3,3 +3,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.typst-doc {
+    @apply bg-gray-100 w-full h-full;
+}

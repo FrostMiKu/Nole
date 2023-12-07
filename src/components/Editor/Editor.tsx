@@ -8,11 +8,11 @@ import {
 } from "../../lib/editor";
 import { CurrentFileAtom } from "../../lib/state";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { EditorView } from "codemirror";
 import { EditorState } from "@codemirror/state";
 import { debounce, asyncThrottle } from "../../lib/utils";
-import { TypstDocument, compile } from "../../ipc/typst";
+import { TypstCompileResult, compile } from "../../ipc/typst";
 import { Intent, Spinner, Tooltip } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import OnceInputer from "../OnceInputer";
@@ -22,7 +22,7 @@ export const Editor = () => {
   const [currentFile, _] = useAtom(CurrentFileAtom);
   const [renameing, setRenameing] = useState<boolean>(false);
   const [editor, setEditor] = useState<EditorView | null>(null);
-  const [doc, setDoc] = useState<TypstDocument | null>(null);
+  const [doc, setDoc] = useState<TypstCompileResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [debounceCancelFn, setDebounceCancelFn] = useState<(() => void) | null>(
     null
@@ -31,53 +31,46 @@ export const Editor = () => {
     "idle" | "compiling" | "done" | "error"
   >("idle");
 
-  const compileThrottled = useCallback(
-    asyncThrottle(async (path: string, content: string): Promise<void> => {
-      console.log("called");
-
-      try {
-        setCompileStatus("compiling");
-        const document = await compile(
-          window.nole!.workspace()!,
-          path,
-          content
-        );
-        if (document.frames.length === 0) {
-          setCompileStatus("idle");
-          setErrorMsg(null);
-          return Promise.resolve();
-        }
-        setDoc(document);
-      } catch (error) {
-        setErrorMsg(error as string);
-        // window.nole!.notify.error({ content: error as string });
-        setCompileStatus("error");
-        return Promise.reject(error);
-      }
-      setCompileStatus("done");
-      setErrorMsg(null);
-      return Promise.resolve();
-    }),
-    []
-  );
-
-  const compileDebounced = useCallback(
-    // throttle compile, debounce typing, convert to canvas
-    debounce(compileThrottled, window.nole!.config.compile_delay),
-    [compileThrottled]
-  );
-
   // cancel last file compile debounce on file change
   useEffect(() => {
-    if (debounceCancelFn) {
-      debounceCancelFn();
-      setDebounceCancelFn(null);
-    }
-  }, [currentFile]);
+    return () => {      
+      if (debounceCancelFn) {
+        debounceCancelFn();
+        setDebounceCancelFn(null);
+      }
+    };
+  }, []);
 
-  const autoSave = useCallback(autosave(window.nole.config.autosave_delay), []);
-
+  
   useEffect(() => {
+    const autoSave = autosave(window.nole.config.autosave_delay);
+    const compileThrottled = asyncThrottle(async (path: string, content: string): Promise<void> => {
+        try {
+          setCompileStatus("compiling");
+          const document = await compile(
+            window.nole!.workspace()!,
+            path,
+            content
+          );
+          if (document.updated_idx.length === 0) {
+            setCompileStatus("idle");
+            setErrorMsg(null);
+            return Promise.resolve();
+          }
+          setDoc(document);
+        } catch (error) {
+          setErrorMsg(error as string);
+          // window.nole!.notify.error({ content: error as string });
+          setCompileStatus("error");
+          return Promise.reject(error);
+        }
+        setCompileStatus("done");
+        setErrorMsg(null);
+        return Promise.resolve();
+  });
+  // throttle compile, debounce typing
+  const compileDebounced = debounce(compileThrottled, window.nole!.config.compile_delay);
+    
     setCompileStatus("idle");
     if (currentFile !== null) {
       const typingExtension = getTypingExtension((content) => {
@@ -106,7 +99,7 @@ export const Editor = () => {
           window.nole!.notify.error({ content: e as string });
         });
     }
-  }, [currentFile, editor]);
+  }, [editor]);
 
   let status = <span className="text-green-500">Cached</span>;
   if (compileStatus === "compiling") {
@@ -171,7 +164,7 @@ export const Editor = () => {
         )}
         {status}
       </div>
-      <PanelGroup direction="horizontal" className="bg-white px-2 pb-2">
+      <PanelGroup autoSaveId="editor_size" direction="horizontal" className="bg-white px-2 pb-2">
         <Panel
           defaultSizePercentage={50}
           minSizePercentage={20}
@@ -184,7 +177,7 @@ export const Editor = () => {
           />
         </Panel>
         <PanelResizeHandle className="w-1 hover:bg-blue-100 focus:outline-none" />
-        <Panel defaultSizePercentage={50} minSizePercentage={20}>
+        <Panel defaultSizePercentage={50} minSizePercentage={20} >
           <Render doc={doc} />
         </Panel>
       </PanelGroup>
