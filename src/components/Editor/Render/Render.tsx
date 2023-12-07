@@ -21,14 +21,14 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
 
   const onResizeDebounced = useCallback(
     debounce((entries: ResizeEntry[]) => {
-      console.log("resize", renderWidth, "==>", entries[0].contentRect.width);
+      console.debug("resize", renderWidth, "==>", entries[0].contentRect.width);
       setRenderWidth(entries[0].contentRect.width);
     }, window.nole.config.resize_render_delay),
     []
   );
 
   useEffect(() => {
-    console.log(doc?.updated_idx);
+    console.log("render:", doc?.updated_idx);
     if (!doc) return;
     const newPages = [...pages];
     if (doc.n_pages > pages.length) {

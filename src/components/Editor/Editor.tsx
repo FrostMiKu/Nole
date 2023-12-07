@@ -52,7 +52,7 @@ export const Editor = () => {
             path,
             content
           );
-          if (document.updated_idx.length === 0) {
+          if (document.updated_idx.length === 0 && doc) {
             setCompileStatus("idle");
             setErrorMsg(null);
             return Promise.resolve();
@@ -159,7 +159,7 @@ export const Editor = () => {
               setRenameing(true);
             }}
           >
-            {currentFile?.name}
+            {"✍🏼 " + currentFile?.name}
           </h3>
         )}
         {status}
