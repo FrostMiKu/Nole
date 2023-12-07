@@ -77,21 +77,18 @@ pub async fn compile(
         .world_cache
         .lock()
         .map_err(|_| "Get world lock failed!")?;
-    if world.is_none() || world.as_ref().ok_or("Unknow world cache stat.")?.path() != &path {
+    if world.is_none() || world.as_ref().ok_or("Unknow world cache stat.")?.input() != &path {
         *world = Some(NoleWorld::new(workspace, path, engine.core.clone())?);
     }
     let world = world.as_mut().ok_or("World initialize failed")?;
     world.reset();
     world.virtual_source(world.main(), content)?;
-    // Ensure that the main file is present. 23/11/25 update: virtual_source will need not to do this
-    // world.source(world.main()).map_err(|err| err.to_string())?;
 
     let mut tracer = Tracer::new();
     let result = typst::compile(world, &mut tracer);
-    // let warnings = tracer.warnings();
 
     match result {
-        // Export the PDF / PNG / SVG.
+        // Export the SVG.
         Ok(document) => {
             let duration = start.elapsed();
             println!("Compile duration: {:?}", duration);
@@ -105,7 +102,7 @@ pub async fn compile(
                         .expect("Can not lock cache!")
                         .is_cached(i, frame)
                     {
-                        continue;
+                        continue; // todo: the cache cause the image not update
                     }
                 }
                 outputs.push((i, typst_svg::svg(frame)));
@@ -117,15 +114,6 @@ pub async fn compile(
             let width = first_page.width();
             let height = first_page.height();
 
-            // let _ = window.emit(
-            //     "typst_compile",
-            //     TypstDocument {
-            //         width: width.to_pt(),
-            //         height: height.to_pt(),
-            //         frames: outputs,
-            //         n_pages: document.pages.len(),
-            //     },
-            // );
             return Ok(TypstDocument {
                 width: width.to_pt(),
                 height: height.to_pt(),
