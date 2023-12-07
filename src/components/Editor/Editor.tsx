@@ -33,7 +33,7 @@ export const Editor = () => {
 
   // cancel last file compile debounce on file change
   useEffect(() => {
-    return () => {      
+    return () => {
       if (debounceCancelFn) {
         debounceCancelFn();
         setDebounceCancelFn(null);
@@ -41,10 +41,10 @@ export const Editor = () => {
     };
   }, []);
 
-  
   useEffect(() => {
     const autoSave = autosave(window.nole.config.autosave_delay);
-    const compileThrottled = asyncThrottle(async (path: string, content: string): Promise<void> => {
+    const compileThrottled = asyncThrottle(
+      async (path: string, content: string): Promise<void> => {
         try {
           setCompileStatus("compiling");
           const document = await compile(
@@ -67,10 +67,14 @@ export const Editor = () => {
         setCompileStatus("done");
         setErrorMsg(null);
         return Promise.resolve();
-  });
-  // throttle compile, debounce typing
-  const compileDebounced = debounce(compileThrottled, window.nole!.config.compile_delay);
-    
+      }
+    );
+    // throttle compile, debounce typing
+    const compileDebounced = debounce(
+      compileThrottled,
+      window.nole!.config.compile_delay
+    );
+
     setCompileStatus("idle");
     if (currentFile !== null) {
       const typingExtension = getTypingExtension((content) => {
@@ -117,7 +121,13 @@ export const Editor = () => {
       <span className="text-red-500">
         {errorMsg ? (
           <Tooltip defaultIsOpen={true} position="bottom" content={errorMsg}>
-            Error
+            <>
+              <span className="inline-flex relative h-2 w-2 mr-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
+              </span>
+              Error
+            </>
           </Tooltip>
         ) : (
           "Error"
@@ -164,7 +174,11 @@ export const Editor = () => {
         )}
         {status}
       </div>
-      <PanelGroup autoSaveId="editor_size" direction="horizontal" className="bg-white px-2 pb-2">
+      <PanelGroup
+        autoSaveId="editor_size"
+        direction="horizontal"
+        className="bg-white px-2 pb-2"
+      >
         <Panel
           defaultSizePercentage={50}
           minSizePercentage={20}
@@ -177,7 +191,7 @@ export const Editor = () => {
           />
         </Panel>
         <PanelResizeHandle className="w-1 hover:bg-blue-100 focus:outline-none" />
-        <Panel defaultSizePercentage={50} minSizePercentage={20} >
+        <Panel defaultSizePercentage={50} minSizePercentage={20}>
           <Render doc={doc} />
         </Panel>
       </PanelGroup>

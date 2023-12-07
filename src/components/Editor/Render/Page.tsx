@@ -15,7 +15,7 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
   const [ loading, setLoading ] = useState<boolean>(true);
 
   useEffect(() => {
-    // setTimeout(() => {
+    setTimeout(() => {
     if (!canvasRef.current || !data || !image) return;
     const dpr = window.devicePixelRatio || 1;
     const domWidth = Math.floor(width || canvasRef.current.clientWidth);
@@ -32,11 +32,10 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
       ctx.drawImage(image, 0, 0, domWidth, domHeight);
       setLoading(false);
     }
-  // },20000); // emulate loading
+  },20000); // emulate loading
   }, [image, width]);
 
   useEffect(() => {    
-    console.log("page loaded", page);
     setLoading(true);
     render(page, scale).then((data)=>{
       setData(data);
@@ -48,12 +47,11 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
       img.src = url;
     })
   }, [update]);
-  console.log("render page:", canvasRef.current);
   
   const className = useMemo(()=>{
     const className = ["w-full"];
     if(loading){
-      className.push("h-full bp5-skeleton");
+      className.push("h-full rounded-lg bg-slate-200 animate-pulse");
       if(page !== 0) className.push("hidden");
     } else {
       className.push("shadow-lg");

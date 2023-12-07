@@ -36,8 +36,6 @@ function Whiteboard() {
     });
   },[]);
 
-
-
   const autosave = useCallback(
     debounce(async (elements, appState, files) => {
       if (!currentFile) return;
@@ -120,7 +118,7 @@ function Whiteboard() {
               setRenameing(true);
             }}
           >
-            {currentFile?.name}
+            {"✏️ "+currentFile?.name}
           </div>
         )}
       </Footer>

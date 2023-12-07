@@ -28,7 +28,6 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
   );
 
   useEffect(() => {
-    console.log("render:", doc?.updated_idx);
     if (!doc) return;
     const newPages = [...pages];
     if (doc.n_pages > pages.length) {
