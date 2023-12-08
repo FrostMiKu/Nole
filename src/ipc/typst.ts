@@ -25,6 +25,10 @@ interface CompletionResult {
     offset: number;
 }
 
+export const reset = async (): Promise<void> => {
+    return invoke("reset", {});
+}
+
 export const compile = async (workspace:string, path:string, content:string): Promise<TypstCompileResult> => {    
     return invoke("compile", {"workspace": workspace, "path": path, "content": content});
 }
@@ -35,4 +39,8 @@ export const render = async (page:number, scale:number): Promise<TypstRenderResu
 
 export const autocomplete = async (path:string, content:string, offset:number, explicit:boolean):Promise<CompletionResult> => {
     return invoke("autocomplete", {"path": path, "content": content, "offset": offset, "explicit":explicit});
+}
+
+export const exportPDF = async (id:string, path:string):Promise<void> => {
+    return invoke("export", {"id": id, "path": path});
 }

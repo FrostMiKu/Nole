@@ -25,9 +25,12 @@ fn main() {
         .plugin(tauri_plugin_context_menu::init())
         .manage(engine)
         .invoke_handler(tauri::generate_handler![
+            ipc::reset,
             ipc::compile,
             ipc::render,
             ipc::autocomplete,
+            ipc::export,
+            ipc::delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

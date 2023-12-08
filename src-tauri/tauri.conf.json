@@ -6,15 +6,15 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "nole",
-    "version": "0.1.5"
+    "productName": "Nole",
+    "version": "0.1.8"
   },
   "tauri": {
     "allowlist": {
       "all": false,
       "shell": {
         "all": false,
-        "open": true
+        "open": "^((/\\w+)|([A-Za-z]:\\w+)).+"
       },
       "fs": {
         "all": true,
@@ -53,8 +53,8 @@
         "fullscreen": false,
         "resizable": true,
         "title": "Nólë",
-        "width": 950,
-        "height": 700,
+        "width": 1000,
+        "height": 850,
         "minWidth": 800,
         "minHeight": 600,
         "fileDropEnabled": false

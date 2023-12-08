@@ -5,13 +5,21 @@ import { Editor } from "./components/Editor/Editor";
 import { CurrentFileAtom } from "./lib/state";
 import { useAtom } from "jotai";
 import Ribbon from "./components/Ribbon";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import DevEventListener from "./DevEventListener";
 import Whiteboard from "./components/Whiteboard";
 import PictureViewer from "./components/PictureViewer";
+import {
+  ImperativePanelHandle,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
+} from "react-resizable-panels";
+import { UIEvent } from "./lib/bus";
 
 function App() {
   const [currentFile, setCurrenFile] = useAtom(CurrentFileAtom);
+  const fileTreeRef = useRef<ImperativePanelHandle | null>(null);
 
   useEffect(() => {
     const disposers: (() => void)[] = [];
@@ -19,6 +27,22 @@ function App() {
       window.nole!.fs.onFileOpen((file) => {
         setCurrenFile(file);
       }),
+      window.nole.bus.on(UIEvent.ToggleFileTree, () => {
+        if (fileTreeRef.current?.isCollapsed()) {
+          fileTreeRef.current?.expand();
+        } else {
+          fileTreeRef.current?.collapse();
+        }
+      })
+    );
+    return () => {
+      disposers.forEach((disposer) => disposer());
+    };
+  }, []);
+
+  useEffect(() => {
+    const disposers: (() => void)[] = [];
+    disposers.push(
       window.nole!.fs.onFileDeleted((filepath) => {
         if (currentFile?.path === filepath) {
           setCurrenFile(null);
@@ -30,7 +54,9 @@ function App() {
         }
       }),
       window.nole!.fs.onMoved((oldpath, newpath) => {
+        console.log("moved", oldpath, newpath, currentFile?.path);
         if (currentFile?.path === oldpath) {
+          console.log("reopen");
           window.nole!.fs.openFile(newpath);
         }
       })
@@ -38,7 +64,7 @@ function App() {
     return () => {
       disposers.forEach((disposer) => disposer());
     };
-  }, []);
+  }, [currentFile]);
 
   let workspace = (
     <div className="w-full h-full flex justify-center items-center text-2xl text-gray-400">
@@ -76,10 +102,29 @@ function App() {
   return (
     <div className="flex flex-row w-full h-screen select-none overflow-hidden">
       <Ribbon />
-      <FileTree />
-      <div id="workspace" className="w-full h-full">
-        {workspace}
-      </div>
+      <PanelGroup
+        autoSaveId="FileTreeSize"
+        direction="horizontal"
+        className="h-full w-full"
+      >
+        <Panel
+          defaultSizePercentage={20}
+          minSizePercentage={15}
+          maxSizePercentage={25}
+          collapsible
+          className="w-full h-full"
+          ref={fileTreeRef}
+        >
+          <FileTree />
+        </Panel>
+        <PanelResizeHandle className="w-px bg-gray-200 focus:outline-none hover:bg-sky-200" />
+        <Panel defaultSizePercentage={80} className="w-full h-full">
+          <div id="workspace" className="w-full h-full">
+            {workspace}
+          </div>
+        </Panel>
+      </PanelGroup>
+
       <ToastContainer />
       {import.meta.env.DEV ? <DevEventListener /> : <></>}
     </div>

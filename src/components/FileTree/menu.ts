@@ -66,6 +66,15 @@ export const DirContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
     },
   },
   {
+    label: "Open in Explorer",
+    event: () => {
+      const dirpath = getPath(treeData, node.pos);
+      window.nole!.fs.openExplorer(dirpath).catch((err) => {
+        window.nole!.notify.error({ content: err });
+      });
+    },
+  },
+  {
     is_separator: true,
   },
   {
@@ -97,6 +106,16 @@ export const FileContextMenu: (props: MenuProps) => ContextMenu.Item[] = ({
     label: "Rename",
     event: () => {
       setEditPos(node.pos);
+    },
+  },
+  {
+    label: "Open in Explorer",
+    event: () => {
+      const parentPos = node.pos.split("-").slice(0, -1).join("-");
+      const dirpath = getPath(treeData, parentPos);
+      window.nole!.fs.openExplorer(dirpath).catch((err) => {
+        window.nole!.notify.error({ content: err });
+      });
     },
   },
   {

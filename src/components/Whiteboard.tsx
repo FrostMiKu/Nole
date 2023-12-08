@@ -24,6 +24,7 @@ function Whiteboard() {
 
   useEffect(() => {
     currentFile?.readAsBinary().then((buffer) => {
+      if(buffer.length === 0) return setInitialData({});
       const blob = new Blob([buffer], { type: "image/png" });
       loadFromBlob(blob, null, null).then((data) => {
         setInitialData(data);

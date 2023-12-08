@@ -17,7 +17,6 @@ import { showMenu } from "tauri-plugin-context-menu";
 import { DirContextMenu, FileContextMenu } from "./menu";
 import path from "path-browserify";
 import OnceInputer from "../OnceInputer";
-import { UIEvent } from "../../lib/bus";
 
 type OnExpandFn = TreeProps["onExpand"];
 type OnDropFn = TreeProps["onDrop"];
@@ -26,7 +25,6 @@ type LoadFn = TreeProps["loadData"];
 
 
 const FileTree: React.FC = () => {
-  const [hiddenFileTree, setHiddenFileTree] = useState<boolean>(false);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([
     window.nole!.workspace()!,
   ]);
@@ -39,12 +37,6 @@ const FileTree: React.FC = () => {
     },
   ]);
   const [editPos, setEditPos] = useState<string | null>(null);
-
-  useEffect(() => {
-    window.nole.bus.on(UIEvent.ToggleFileTree, () => {
-      setHiddenFileTree(!hiddenFileTree);
-    })
-  },[hiddenFileTree])
 
   useEffect(() => {
     const disposers: (() => void)[] = [];
@@ -194,7 +186,7 @@ const FileTree: React.FC = () => {
   }, [editPos]);
 
   return (
-    <div className={"min-w-52 w-52 lg:w-60 bg-gray-100 overflow-hidden " + (hiddenFileTree?"hidden":"")}>
+    <div className="w-full h-full bg-gray-100 overflow-hidden">
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
       <Tree
         className="bg-slate-100 w-full h-full overflow-y-auto overflow-x-hidden"

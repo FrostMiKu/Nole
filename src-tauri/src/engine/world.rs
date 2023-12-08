@@ -139,7 +139,6 @@ impl World for NoleWorld {
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
-        println!("file: {:?}", id.vpath().resolve(self.root()).ok_or(FileError::AccessDenied));
         self.slot(id)?.file(&self.root)
     }
 

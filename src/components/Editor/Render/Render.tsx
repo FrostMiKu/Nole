@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-// import { ResizeEntry, ResizeSensor } from "@blueprintjs/core";
 import { TypstCompileResult } from "../../../ipc/typst";
 import Page, { PageProps } from "./Page";
 import { randomString } from "remeda";
 import { ResizeEntry, ResizeSensor } from "@blueprintjs/core";
 import { debounce } from "../../../lib/utils";
-// import Page from "./Page";
-// import { createCanvas, debounce } from "../../../lib/utils";
-// import { randomString } from "remeda";
 
 export interface RenderProps {
   doc: TypstCompileResult | null;
@@ -15,13 +11,19 @@ export interface RenderProps {
 
 const Render: React.FC<RenderProps> = ({ doc }) => {
   const renderRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState<number>(1.5); // todo: [1, 2, 3, 4, 5]
+  const [scale, _] = useState<number>(1.5); // todo: [1, 2, 3, 4, 5]
   const [pages, setPages] = useState<PageProps[]>([]);
   const [renderWidth, setRenderWidth] = useState<number | null>(null);
+  const [scollTop, setScrollTop] = useState<number>(0);
+
+  useEffect(() => {
+    if (!renderRef.current) return;
+    renderRef.current.scrollTop = scollTop;
+  });
 
   const onResizeDebounced = useCallback(
     debounce((entries: ResizeEntry[]) => {
-      console.debug("resize", renderWidth, "==>", entries[0].contentRect.width);
+      // console.debug("resize", renderWidth, "==>", entries[0].contentRect.width);
       setRenderWidth(entries[0].contentRect.width);
     }, window.nole.config.resize_render_delay),
     []
@@ -53,6 +55,10 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
       <div
         ref={renderRef}
         className="p-2 rounded-lg bg-slate-50 w-full h-full flex flex-col gap-4 items-center overflow-auto"
+        onScroll={(e) => {
+          if (e.currentTarget.scrollTop === 0) return;
+          setScrollTop(e.currentTarget.scrollTop);
+        }}
       >
         {pages.map((item) => {
           return (

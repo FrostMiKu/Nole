@@ -12,11 +12,12 @@ import { useEffect, useState } from "react";
 import { EditorView } from "codemirror";
 import { EditorState } from "@codemirror/state";
 import { debounce, asyncThrottle } from "../../lib/utils";
-import { TypstCompileResult, compile } from "../../ipc/typst";
-import { Intent, Spinner, Tooltip } from "@blueprintjs/core";
+import { TypstCompileResult, compile, exportPDF, reset } from "../../ipc/typst";
+import { Button, Intent, Spinner, Tooltip } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import OnceInputer from "../OnceInputer";
 import path from "path-browserify";
+import { save } from "@tauri-apps/api/dialog";
 
 export const Editor = () => {
   const [currentFile, _] = useAtom(CurrentFileAtom);
@@ -33,6 +34,7 @@ export const Editor = () => {
 
   // cancel last file compile debounce on file change
   useEffect(() => {
+    reset();
     return () => {
       if (debounceCancelFn) {
         debounceCancelFn();
@@ -105,7 +107,44 @@ export const Editor = () => {
     }
   }, [editor]);
 
-  let status = <span className="text-green-500">Cached</span>;
+  const exportButton = (
+    <Button
+      small
+      icon="export"
+      title="Export PDF"
+      minimal
+      onClick={async () => {
+        if (currentFile === null) return Promise.reject();
+        const exportPath = await save({
+          defaultPath: currentFile.name + ".pdf",
+          title: "Export PDF",
+          filters: [
+            {
+              name: currentFile.name,
+              extensions: ["pdf"],
+            },
+          ],
+        });
+        if (exportPath === null) return Promise.reject();
+        exportPDF(currentFile.path, exportPath)
+          .then(() =>
+            window.nole.notify.info({
+              content: "Exported at " + exportPath,
+            })
+          )
+          .catch(() => {
+            window.nole.notify.error({ content: "Failed to export." });
+          });
+      }}
+    ></Button>
+  );
+
+  let status = (
+    <>
+      <span className="text-green-500">Cached</span>
+      {exportButton}
+    </>
+  );
   if (compileStatus === "compiling") {
     status = (
       <Spinner
@@ -115,7 +154,12 @@ export const Editor = () => {
       ></Spinner>
     );
   } else if (compileStatus === "done") {
-    status = <span className="text-green-500">Compiled</span>;
+    status = (
+      <>
+        <span className="text-green-500">Compiled</span>
+        {exportButton}
+      </>
+    );
   } else if (compileStatus === "error") {
     status = (
       <span className="text-red-500">
@@ -164,7 +208,7 @@ export const Editor = () => {
           />
         ) : (
           <h3
-            className="font-medium text-lg max-w-xs overflow-hidden"
+            className="w-full font-medium text-lg max-w-xs overflow-hidden"
             onDoubleClick={() => {
               setRenameing(true);
             }}
@@ -172,10 +216,15 @@ export const Editor = () => {
             {"✍🏼 " + currentFile?.name}
           </h3>
         )}
-        {status}
+        <div
+          id="statusbar"
+          className="h-full flex justify-center items-center gap-1"
+        >
+          {status}
+        </div>
       </div>
       <PanelGroup
-        autoSaveId="editor_size"
+        autoSaveId="EditorSize"
         direction="horizontal"
         className="bg-white px-2 pb-2"
       >
@@ -190,7 +239,7 @@ export const Editor = () => {
             className="h-full select-text"
           />
         </Panel>
-        <PanelResizeHandle className="w-1 hover:bg-blue-100 focus:outline-none" />
+        <PanelResizeHandle className="w-1 hover:bg-sky-200 focus:outline-none" />
         <Panel defaultSizePercentage={50} minSizePercentage={20}>
           <Render doc={doc} />
         </Panel>

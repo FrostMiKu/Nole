@@ -2,7 +2,9 @@ import { fs } from "@tauri-apps/api";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { FileEntry } from "@tauri-apps/api/fs";
 import { EventBus, FileEvent } from "./bus";
+import { open } from "@tauri-apps/api/shell";
 import path from "path-browserify";
+import { deleteToTrash } from "../ipc/fs";
 
 type BinaryFileContents = Iterable<number> | ArrayLike<number> | ArrayBuffer;
 
@@ -157,23 +159,35 @@ export class FileManager {
     dirpath = await this.tryCreatePath(dirpath);
     return this.createDir(dirpath);
   }
-  async deleteFile(filepath: string): Promise<void> {
+  async deleteFile(filepath: string, trash: boolean = true): Promise<void> {
     filepath = this.withinRoot(filepath)!;
     if (!filepath) {
       return Promise.reject("Invalid path.");
     }
-    await fs.removeFile(filepath);
+    if (trash) {
+      await deleteToTrash(filepath);
+    } else {
+      await fs.removeFile(filepath);
+    }
     this.bus.emit(FileEvent.FileDeleted, filepath);
   }
   onFileDeleted(listener: (filepath: string) => void) {
     return this.bus.on(FileEvent.FileDeleted, listener);
   }
-  async delectDir(dirpath: string, recursive: boolean = false): Promise<void> {
+  async delectDir(
+    dirpath: string,
+    recursive: boolean = false,
+    trash: boolean = true
+  ): Promise<void> {
     dirpath = this.withinRoot(dirpath)!;
     if (!dirpath) {
       return Promise.reject("Invalid path.");
     }
-    await fs.removeDir(dirpath, { recursive });
+    if (trash) {
+      await deleteToTrash(dirpath);
+    } else {
+      await fs.removeDir(dirpath, { recursive });
+    }
     this.bus.emit(FileEvent.DirDeleted, dirpath);
   }
   onDirDeleted(listener: (dirpath: string) => void) {
@@ -201,6 +215,10 @@ export class FileManager {
   }
   onMoved(listener: (oldpath: string, newpath: string) => void) {
     return this.bus.on(FileEvent.FileMoved, listener);
+  }
+
+  openExplorer(dirpath: string): Promise<void> {
+    return open(dirpath);
   }
 
   // Resolve the filepath within the workspace root or reject.

@@ -1,6 +1,6 @@
 type DebouncedFunction<F extends (...args: any[]) => any> = (
   ...args: Parameters<F>
-) => ()=>void;
+) => () => void;
 /**
  * debounce function
  * @param func function
@@ -22,12 +22,12 @@ export function debounce<F extends (...args: any[]) => any>(
       func(...args);
       timerId = null;
     }, delay);
-    return ()=>{
+    return () => {
       if (timerId) {
         clearTimeout(timerId);
         timerId = null;
       }
-    }
+    };
   };
 }
 
@@ -84,14 +84,41 @@ export const asyncThrottle = <T extends any[]>(
   };
 };
 
-export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...funcArgs: Parameters<T>) => void {
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...funcArgs: Parameters<T>) => void {
   let inThrottle: boolean;
-  return function(this: any, ...args: Parameters<T>) {
+  return function (this: any, ...args: Parameters<T>) {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
 
+export function copyCanvasContentsToClipboard(
+  canvas: HTMLCanvasElement,
+  onDone: () => void,
+  onError: (err: any) => void
+) {
+  canvas.toBlob((blob) => {
+    if (!blob) {
+      onError("Couldn't get a blob from the canvas");
+      return;
+    }
+    if (!navigator.clipboard) {
+      onError("Clipboard API not available");
+      return;
+    }
+
+    let data = [new ClipboardItem({ [blob.type]: blob })];
+    navigator.clipboard
+      .write(data)
+      .then(onDone)
+      .catch((err) => {
+        onError(err);
+      });
+  });
+}

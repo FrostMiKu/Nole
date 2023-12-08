@@ -22,18 +22,18 @@ function Ribbon(): JSX.Element {
       {
         name: "New file",
         icon: "annotation",
-        action: () => {
-          window.nole!.fs.tryCreateFile("Untitled.typ");
+        action: async () => {
+          const file = await window.nole!.fs.tryCreateFile("Untitled.typ");
+          window.nole.fs.openFile(file.path);
         },
       },
       {
         name: "New Canvas",
         icon: "graph",
         action: () => {
-          window.nole!.fs.tryCreateFile("Untitled.draw").then((file) => {
-            file.writeAsBinary(
-              []
-            );
+          window.nole!.fs.tryCreateFile("Untitled.draw").then(async (file) => {
+            await file.writeAsBinary([]);
+            window.nole.fs.openFile(file.path);
           });
         },
       },
@@ -57,7 +57,7 @@ function Ribbon(): JSX.Element {
       <div className="h-full"></div>
       <Button
         key="switch workspace"
-        title="switch workspace"
+        title="Switch workspace"
         icon="control"
         onClick={() => {
           localStorage.removeItem("workspace");
@@ -66,7 +66,7 @@ function Ribbon(): JSX.Element {
       />
       <Button
         key="setting"
-        title="setting"
+        title="Setting"
         icon="settings"
         onClick={() => {
           window.nole!.notify.warn({ content: "Setting: todo..." });

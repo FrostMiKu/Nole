@@ -24,8 +24,12 @@ impl TypstEngine {
             world_cache: Mutex::new(None) 
         }
     }
+    pub fn reset(&self) -> Result<(), String> {
+        *self.world_cache.lock().map_err(|e|return "Get world lock faild!")? = None;
+        *self.document_cache.write().map_err(|e|return "Get document lock faild!")? = None;
+        Ok(())
+    }
 }
-
 
 pub struct TypstCore {
     /// Typst's standard library.

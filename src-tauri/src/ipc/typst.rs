@@ -1,5 +1,8 @@
 use base64::{engine::general_purpose, Engine as _};
+use chrono::{Datelike, Timelike};
 use serde::Serialize;
+use typst::foundations::Datetime;
+use std::fs;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -85,7 +88,7 @@ pub async fn compile(
         *world = Some(NoleWorld::new(workspace, path, engine.core.clone())?);
     }
     let world = world.as_mut().ok_or("World initialize failed")?;
-    world.reset();
+    // world.reset(); todo: currently, nole only support single file opened, so we don't need to reset the world
     world.virtual_source(world.main(), content)?;
 
     let mut tracer = Tracer::new();
@@ -127,9 +130,16 @@ pub async fn compile(
         // Print diagnostics.
         Err(errors) => {
             // let _ = window.emit("typst_compile", errors.deref()[0].message.as_str());
-            return Err(errors.deref()[0].message.as_str().to_string().into());
+            let err = &errors.deref()[0];
+            return Err(err.message.clone() + "\n" + err.hints.join("\n").as_str());
         }
     }
+}
+
+/// reset the world and document at editor mount.
+#[tauri::command]
+pub async fn reset(engine: tauri::State<'_, Arc<TypstEngine>>,) -> Result<(), String> {
+    engine.reset().map_err(|err| err.to_string())
 }
 
 /// Returns whether it render without errors.
@@ -161,53 +171,36 @@ pub async fn render(
         });
 }
 
-// Export into the target format.
-// fn export(
-//     world: &mut SystemWorld,
-//     document: &Document,
-//     command: &CompileCommand,
-//     watching: bool,
-// ) -> StrResult<()> {
-//     match command.output_format()? {
-//         OutputFormat::Png => {
-//             export_image(world, document, command, watching, ImageExportFormat::Png)
-//         }
-//         OutputFormat::Svg => {
-//             export_image(world, document, command, watching, ImageExportFormat::Svg)
-//         }
-//         OutputFormat::Pdf => export_pdf(document, command, world),
-//     }
-// }
+/// Returns whether it without errors.
+#[tauri::command]
+pub async fn export(
+    engine: tauri::State<'_, Arc<TypstEngine>>,
+    id: String,
+    path: PathBuf,
+) -> Result<(), String> {
+    let document = engine
+        .document_cache
+        .read()
+        .map_err(|_| "Read document failed!")?;
+    let timer = std::time::Instant::now();
 
-// Export to a PDF.
-// fn export_pdf(
-//     document: &Document,
-//     command: &CompileCommand,
-//     world: &SystemWorld,
-// ) -> StrResult<()> {
-//     let ident = world.input().to_string_lossy();
-//     let buffer = typst_pdf::pdf(document, Some(&ident), now());
-//     let output = command.output();
-//     fs::write(output, buffer)
-//         .map_err(|err| eco_format!("failed to write PDF file ({err})"))?;
-//     Ok(())
-// }
+    let pdf = typst_pdf::pdf(document.as_ref().ok_or("can not get ducument.")?, Some(&id), now());
+    let elapsed = timer.elapsed();
+    println!("Export pdf duration: {:?}", elapsed);
+    fs::write(path, pdf)
+        .map_err(|err| err.to_string())
+        .map(|_| ())
+}
 
-// Get the current date and time in UTC.
-// fn now() -> Option<Datetime> {
-//     let now = chrono::Local::now().naive_utc();
-//     Datetime::from_ymd_hms(
-//         now.year(),
-//         now.month().try_into().ok()?,
-//         now.day().try_into().ok()?,
-//         now.hour().try_into().ok()?,
-//         now.minute().try_into().ok()?,
-//         now.second().try_into().ok()?,
-//     )
-// }
-
-// /// An image format to export in.
-// enum ImageExportFormat {
-//     Png,
-//     Svg,
-// }
+/// Get the current date and time in UTC.
+fn now() -> Option<Datetime> {
+    let now = chrono::Local::now().naive_utc();
+    Datetime::from_ymd_hms(
+        now.year(),
+        now.month().try_into().ok()?,
+        now.day().try_into().ok()?,
+        now.hour().try_into().ok()?,
+        now.minute().try_into().ok()?,
+        now.second().try_into().ok()?,
+    )
+}
