@@ -61,6 +61,6 @@ class Path {
 }
 
 let path: Path;
-import.meta.env.OS === 'windows' ? path = new Path('\\') : path = new Path('/');
+import.meta.env.VITE_OS === 'windows' ? path = new Path('\\') : path = new Path('/');
 
 export default path;

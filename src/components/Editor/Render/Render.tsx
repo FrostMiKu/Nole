@@ -54,7 +54,7 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
     <ResizeSensor targetRef={renderRef} onResize={onResizeDebounced}>
       <div
         ref={renderRef}
-        className="p-2 rounded-lg bg-slate-50 w-full h-full flex flex-col gap-4 items-center overflow-auto"
+        className="p-2 rounded-lg bg-slate-50 w-full h-full flex flex-col gap-4 items-center overflow-y-auto overflow-x-hidden"
         onScroll={(e) => {
           if (e.currentTarget.scrollTop === 0) return;
           setScrollTop(e.currentTarget.scrollTop);
