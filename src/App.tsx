@@ -108,8 +108,8 @@ function App() {
         className="h-full w-full"
       >
         <Panel
-          defaultSizePercentage={20}
-          minSizePercentage={15}
+          defaultSizePercentage={15}
+          minSizePercentage={10}
           maxSizePercentage={25}
           collapsible
           className="w-full h-full"
@@ -118,7 +118,7 @@ function App() {
           <FileTree />
         </Panel>
         <PanelResizeHandle className="w-px bg-gray-200 focus:outline-none hover:bg-sky-200" />
-        <Panel defaultSizePercentage={80} className="w-full h-full">
+        <Panel className="w-full h-full">
           <div id="workspace" className="w-full h-full">
             {workspace}
           </div>

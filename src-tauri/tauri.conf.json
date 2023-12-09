@@ -53,8 +53,8 @@
         "fullscreen": false,
         "resizable": true,
         "title": "Nólë",
-        "width": 1000,
-        "height": 850,
+        "width": 950,
+        "height": 750,
         "minWidth": 800,
         "minHeight": 600,
         "fileDropEnabled": false
