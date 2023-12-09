@@ -14,7 +14,7 @@
       "all": false,
       "shell": {
         "all": false,
-        "open": "^((https://\\w+)|(/\\w+)|([A-Za-z]:\\w+)).+"
+        "open": "^((https://\\w+)|(/\\w+)|([A-Za-z]:\\\\\\w+)).+"
       },
       "fs": {
         "all": true,
