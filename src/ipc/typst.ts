@@ -37,8 +37,8 @@ export const render = async (page:number, scale:number): Promise<TypstRenderResu
     return invoke("render", {"page": page, "scale": scale});
 }
 
-export const autocomplete = async (path:string, content:string, offset:number, explicit:boolean):Promise<CompletionResult> => {
-    return invoke("autocomplete", {"path": path, "content": content, "offset": offset, "explicit":explicit});
+export const autocomplete = async (content:string, offset:number, explicit:boolean):Promise<CompletionResult> => {
+    return invoke("autocomplete", {"content": content, "offset": offset, "explicit":explicit});
 }
 
 export const exportPDF = async (id:string, path:string):Promise<void> => {

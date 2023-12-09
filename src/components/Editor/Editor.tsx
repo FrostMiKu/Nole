@@ -84,7 +84,7 @@ export const Editor = () => {
         const cancelFN = compileDebounced(currentFile.path, content);
         setDebounceCancelFn(() => cancelFN);
       });
-      const autocompletionExtension = getAutocompletionExtension(currentFile);
+      const autocompletionExtension = getAutocompletionExtension();
       currentFile
         .read()
         .then((e) => {

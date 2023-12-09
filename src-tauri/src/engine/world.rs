@@ -108,13 +108,6 @@ impl NoleWorld {
         &self.root
     }
 
-    /// Get file id
-    pub fn file_id(&self, path: &Path) -> Result<FileId, String> {
-        let vpath = VirtualPath::within_root(path, &self.root)
-            .ok_or("input file must be contained in project root")?;
-        Ok(FileId::new(None, vpath))
-    }
-
     /// Gets access to the export cache.
     pub fn export_cache(&mut self) -> &mut ExportCache {
         &mut self.export_cache

@@ -36,18 +36,15 @@ pub struct TypstRenderResponse {
 
 #[tauri::command]
 pub async fn autocomplete(
-    // window: tauri::Window<R>,
     engine: tauri::State<'_, Arc<TypstEngine>>,
-    path: PathBuf,
     content: String,
     offset: usize,
     explicit: bool,
 ) -> StrResult<TypstCompleteResponse> {
     let world = engine.world_cache.lock().expect("get world lock failed!");
     let world = world.as_ref().ok_or("World not initialized!".to_string())?;
-    let source_id = world.file_id(&path)?;
-    world.virtual_source(source_id, content.to_string())?;
-    let source = world.source(source_id).map_err(|err| err.to_string())?;
+    world.virtual_source(world.main(), content.to_string())?;
+    let source = world.source(world.main()).map_err(|err| err.to_string())?;
 
     // recalc offest for chinese character
     let offset = content
@@ -55,7 +52,7 @@ pub async fn autocomplete(
         .nth(offset)
         .map(|a| a.0)
         .unwrap_or(content.len());
-
+    println!("{}",offset);
     let (completed_offset, completions) =
         typst_ide::autocomplete(world, None, &source, offset, explicit)
             .ok_or("Failed to perform autocomplete".to_string())?;

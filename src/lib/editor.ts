@@ -61,15 +61,15 @@ export const autosave = (saveDelay: number)=>debounce((currentFile: NoleFile, co
   }
 }, saveDelay);
 
-export function getAutocompletionExtension(file: NoleFile) {
+export function getAutocompletionExtension() {
   // todo: add mutiparams selection, tab to select next
   async function Completions(context: CompletionContext) {
     let word = context.matchBefore(/[' ','@','#','$','.','(','[','{'].*/);
+    
     if (word === null) return null;
     if (word!.from === word!.to && !context.explicit) return null;
 
     const complete = await autocomplete(
-      file.path,
       context.state.doc.toString(),
       word.to,
       context.explicit
