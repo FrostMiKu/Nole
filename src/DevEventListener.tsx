@@ -5,7 +5,7 @@ function DevEventListener() {
   useEffect(() => {
     const disposers: (() => void)[] = [];
     disposers.push(
-      window.nole!.fs.onFileOpen((file) => {
+      window.nole!.fs.onFileOpened((file) => {
         console.log("file open", file);
       }),
       window.nole!.fs.onFileDeleted((filepath) => {

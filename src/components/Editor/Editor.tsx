@@ -16,7 +16,7 @@ import { TypstCompileResult, compile, exportPDF, reset } from "../../ipc/typst";
 import { Button, Intent, Spinner, Tooltip } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import OnceInputer from "../OnceInputer";
-import path from "path-browserify";
+import path from "../../lib/path";
 import { save } from "@tauri-apps/api/dialog";
 
 export const Editor = () => {

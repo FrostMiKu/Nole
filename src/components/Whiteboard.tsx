@@ -13,7 +13,7 @@ import {
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import OnceInputer from "./OnceInputer";
-import path from "path-browserify";
+import path from "../lib/path";
 import { debounce } from "../lib/utils";
 
 function Whiteboard() {

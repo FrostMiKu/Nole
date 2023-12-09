@@ -30,7 +30,6 @@
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.16",
     "jotai": "^2.6.0",
-    "path-browserify": "^1.0.1",
     "postcss": "^8.4.31",
     "rc-tree": "^5.8.2",
     "react-resizable-panels": "^0.0.63",

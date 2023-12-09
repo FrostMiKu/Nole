@@ -31,6 +31,7 @@ fn main() {
             ipc::autocomplete,
             ipc::export,
             ipc::delete,
+            ipc::get_available_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

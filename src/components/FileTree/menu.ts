@@ -1,7 +1,7 @@
 import { type ContextMenu } from "tauri-plugin-context-menu";
 import { DataNode, EventDataNode } from "rc-tree/lib/interface";
 import { FileTreeNode, getPath } from "./utils";
-import path from "path-browserify";
+import path from "../../lib/path";
 
 type MenuProps = {
   node: EventDataNode<DataNode>;

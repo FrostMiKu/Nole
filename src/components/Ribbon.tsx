@@ -5,6 +5,7 @@ import { BlueprintIcons_16Id } from "@blueprintjs/icons/lib/esm/generated/16px/b
 import { AppInitializedAtom, RibbonAtom } from "../lib/state";
 import { randomString } from "remeda";
 import { UIEvent } from "../lib/bus";
+import { open } from "@tauri-apps/api/shell";
 
 function Ribbon(): JSX.Element {
   const [ribbons, setRibbons] = useAtom(RibbonAtom);
@@ -55,6 +56,14 @@ function Ribbon(): JSX.Element {
         </Button>
       ))}
       <div className="h-full"></div>
+      <Button 
+        key="Help"
+        title="Help"
+        icon="help"
+        onClick={() => {
+          open("https://typst-doc-cn.github.io/docs/chinese/");
+        }}
+      />
       <Button
         key="switch workspace"
         title="Switch workspace"

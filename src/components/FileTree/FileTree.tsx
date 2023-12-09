@@ -15,7 +15,7 @@ import {
 } from "./utils";
 import { showMenu } from "tauri-plugin-context-menu";
 import { DirContextMenu, FileContextMenu } from "./menu";
-import path from "path-browserify";
+import path from "../../lib/path";
 import OnceInputer from "../OnceInputer";
 
 type OnExpandFn = TreeProps["onExpand"];

@@ -1,7 +1,7 @@
 import { sortBy, randomString } from "remeda";
 import { FileEntry } from "@tauri-apps/api/fs";
 import { DataNode, Key } from "rc-tree/lib/interface";
-import path from "path-browserify";
+import path from "../../lib/path";
 
 export type FileTreeNode = {
   pathpoint: string;
@@ -201,7 +201,7 @@ function splitPathAfterBase(inputPath: string, basePath: string) {
 
   // Extract the portion of the string after the base path
   const remainingPath = inputPath.substring(basePathIndex + basePath.length);
-  const pathArray = remainingPath.split(path.sep).filter(Boolean); // filter(Boolean) removes empty strings
+  const pathArray = remainingPath.split(path.separator).filter(Boolean); // filter(Boolean) removes empty strings
 
   return pathArray;
 }

@@ -3,8 +3,8 @@ import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { FileEntry } from "@tauri-apps/api/fs";
 import { EventBus, FileEvent } from "./bus";
 import { open } from "@tauri-apps/api/shell";
-import path from "path-browserify";
-import { deleteToTrash } from "../ipc/fs";
+import { deleteToTrash, getAvailablePath } from "../ipc/fs";
+import path from "./path";
 
 type BinaryFileContents = Iterable<number> | ArrayLike<number> | ArrayBuffer;
 
@@ -17,6 +17,7 @@ class File {
   parent: string;
   extname: string; // no extname will be set ""
   cache?: string | BinaryFileContents;
+
   constructor(bus: EventBus, filepath: string) {
     this.bus = bus;
     this.path = filepath;
@@ -89,12 +90,12 @@ export class FileManager {
   private bus: EventBus;
 
   constructor(root: string, bus: EventBus) {
-    this.root = path.resolve(root);
+    this.root = root;
     this.bus = bus;
   }
 
   async openFile(filepath: string): Promise<File> {
-    filepath = this.withinRoot(filepath)!;
+    filepath = await this.withinRoot(filepath)!;
     if (!filepath) {
       return Promise.reject("Invalid path.");
     }
@@ -105,24 +106,18 @@ export class FileManager {
     }
     return Promise.reject("File not exists.");
   }
-  onFileOpen(listener: (file: File) => void) {
+  onFileOpened(listener: (file: File) => void) {
     return this.bus.on(FileEvent.FileOpened, listener);
   }
   async listDir(
     dirpath: string,
     recursive: boolean = false
   ): Promise<FileEntry[]> {
-    dirpath = this.withinRoot(dirpath)!;
-    if (!dirpath) {
-      return Promise.reject("Invalid path.");
-    }
+    dirpath = await this.withinRoot(dirpath);
     return await fs.readDir(dirpath, { recursive });
   }
   async createDir(dirpath: string, recursive: boolean = false): Promise<void> {
-    dirpath = this.withinRoot(dirpath)!;
-    if (!dirpath) {
-      return Promise.reject("Invalid path.");
-    }
+    dirpath = await this.withinRoot(dirpath);
     if (await fs.exists(dirpath)) {
       return Promise.reject("Dir already exists.");
     }
@@ -134,10 +129,7 @@ export class FileManager {
   }
   // create file, if file exists, return error
   async createFile(filepath: string): Promise<File> {
-    filepath = this.withinRoot(filepath)!;
-    if (!filepath) {
-      return Promise.reject("Invalid path.");
-    }
+    filepath = await this.withinRoot(filepath);
     if (await fs.exists(filepath)) {
       return Promise.reject("File exists.");
     }
@@ -151,19 +143,16 @@ export class FileManager {
   }
   // try create file, if file exists, add a number to the filename, until success
   async tryCreateFile(filepath: string): Promise<File> {
-    filepath = await this.tryCreatePath(filepath);
+    filepath = await this.getAvailablePath(filepath);
     return this.createFile(filepath);
   }
   // can not recursive create dir
   async tryCreateDir(dirpath: string): Promise<void> {
-    dirpath = await this.tryCreatePath(dirpath);
+    dirpath = await this.getAvailablePath(dirpath);
     return this.createDir(dirpath);
   }
   async deleteFile(filepath: string, trash: boolean = true): Promise<void> {
-    filepath = this.withinRoot(filepath)!;
-    if (!filepath) {
-      return Promise.reject("Invalid path.");
-    }
+    filepath = await this.withinRoot(filepath);
     if (trash) {
       await deleteToTrash(filepath);
     } else {
@@ -179,10 +168,7 @@ export class FileManager {
     recursive: boolean = false,
     trash: boolean = true
   ): Promise<void> {
-    dirpath = this.withinRoot(dirpath)!;
-    if (!dirpath) {
-      return Promise.reject("Invalid path.");
-    }
+    dirpath = await this.withinRoot(dirpath);
     if (trash) {
       await deleteToTrash(dirpath);
     } else {
@@ -198,20 +184,17 @@ export class FileManager {
     newpath: string,
     overwrite: boolean = false
   ): Promise<void> {
-    oldpath = this.withinRoot(oldpath)!;
-    newpath = this.withinRoot(newpath)!;
+    oldpath = await this.withinRoot(oldpath);
+    newpath = await this.withinRoot(newpath);
     if (oldpath === newpath) {
       return Promise.reject("Same path.");
     }
-    if (oldpath && newpath) {
-      if ((await fs.exists(newpath)) && !overwrite) {
-        return Promise.reject("File already exists.");
-      }
-      await fs.renameFile(oldpath, newpath);
-      this.bus.emit(FileEvent.FileMoved, oldpath, newpath);
-      return Promise.resolve();
+    if ((await fs.exists(newpath)) && !overwrite) {
+      return Promise.reject("File already exists.");
     }
-    return Promise.reject("Invalid path.");
+    await fs.renameFile(oldpath, newpath);
+    this.bus.emit(FileEvent.FileMoved, oldpath, newpath);
+    return Promise.resolve();
   }
   onMoved(listener: (oldpath: string, newpath: string) => void) {
     return this.bus.on(FileEvent.FileMoved, listener);
@@ -222,27 +205,18 @@ export class FileManager {
   }
 
   // Resolve the filepath within the workspace root or reject.
-  private withinRoot(filepath: string): string | null {
-    filepath = path.resolve(this.root, filepath);
-
+  private async withinRoot(filepath: string): Promise<string> {
+    filepath = await path.resolve(this.root, filepath);
     if (filepath.startsWith(this.root)) {
       return filepath;
     } else {
-      return null;
-    }
-  }
-  // try find a path of a unused filename, if file exists, add a number to the filename, until success
-  private async tryCreatePath(trypath: string): Promise<string> {
-    trypath = this.withinRoot(trypath)!;
-    if (!trypath) {
       return Promise.reject("Invalid path.");
     }
-    let count = 1;
-    const p = path.parse(trypath);
-    while (await fs.exists(trypath)) {
-      trypath = path.join(p.dir, p.name + " " + count.toString() + p.ext);
-      count++;
-    }
-    return trypath;
+  }
+
+  // try find a path of a unused filename, if file exists, add a number to the filename, until success
+  private async getAvailablePath(trypath: string): Promise<string> {
+    trypath = await this.withinRoot(trypath)!;
+    return getAvailablePath(trypath);
   }
 }
