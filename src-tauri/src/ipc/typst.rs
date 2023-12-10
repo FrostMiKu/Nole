@@ -1,22 +1,61 @@
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{Datelike, Timelike};
 use serde::Serialize;
+use serde_repr::Serialize_repr;
+use typst::diag::{Severity, EcoString};
 use typst::foundations::Datetime;
 use std::fs;
-use std::ops::Deref;
+use std::ops::{Deref, Range};
 use std::path::PathBuf;
 use std::sync::Arc;
 use typst::eval::Tracer;
 use typst::World;
 use typst::{diag::StrResult, visualize::Color};
-use typst_ide::Completion;
-
+use typst_ide::{Completion, CompletionKind};
+use tauri::Runtime;
 use crate::engine::{NoleWorld, TypstEngine};
+
+#[derive(Serialize_repr, Debug)]
+#[repr(u8)]
+pub enum TypstCompletionKind {
+    Syntax = 1,
+    Function = 2,
+    Parameter = 3,
+    Constant = 4,
+    Symbol = 5,
+    Type = 6,
+}
+
+#[derive(Serialize, Debug)]
+pub struct TypstCompletion {
+    kind: TypstCompletionKind,
+    label: String,
+    apply: Option<String>,
+    detail: Option<String>,
+}
 
 #[derive(Serialize, Debug)]
 pub struct TypstCompleteResponse {
     offset: usize,
-    completions: Vec<Completion>,
+    completions: Vec<TypstCompletion>,
+}
+
+impl From<Completion> for TypstCompletion {
+    fn from(value: Completion) -> Self {
+        Self {
+            kind: match value.kind {
+                CompletionKind::Syntax => TypstCompletionKind::Syntax,
+                CompletionKind::Func => TypstCompletionKind::Function,
+                CompletionKind::Param => TypstCompletionKind::Parameter,
+                CompletionKind::Constant => TypstCompletionKind::Constant,
+                CompletionKind::Symbol(_) => TypstCompletionKind::Symbol,
+                CompletionKind::Type => TypstCompletionKind::Type,
+            },
+            label: value.label.to_string(),
+            apply: value.apply.map(|s| s.to_string()),
+            detail: value.detail.map(|s| s.to_string()),
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -25,6 +64,21 @@ pub struct TypstCompileResponse {
     pub n_pages: usize,
     pub width: f64,
     pub height: f64,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum TypstDiagnosticSeverity {
+    Error,
+    Warning,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct TypstDiagnostic {
+    pub range: Range<usize>,
+    pub severity: TypstDiagnosticSeverity,
+    pub message: String,
+    pub hints: Vec<String>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -52,7 +106,7 @@ pub async fn autocomplete(
         .nth(offset)
         .map(|a| a.0)
         .unwrap_or(content.len());
-    println!("{}",offset);
+
     let (completed_offset, completions) =
         typst_ide::autocomplete(world, None, &source, offset, explicit)
             .ok_or("Failed to perform autocomplete".to_string())?;
@@ -61,7 +115,7 @@ pub async fn autocomplete(
 
     Ok(TypstCompleteResponse {
         offset: completed_char_offset,
-        completions: completions,
+        completions: completions.into_iter().map(TypstCompletion::from).collect(),
     })
     // completions
 }
@@ -70,7 +124,8 @@ pub async fn autocomplete(
 ///
 /// Returns whether it compiled without errors.
 #[tauri::command]
-pub async fn compile(
+pub async fn compile<R: Runtime>(
+    window: tauri::Window<R>,
     engine: tauri::State<'_, Arc<TypstEngine>>,
     workspace: PathBuf,
     path: PathBuf,
@@ -86,7 +141,7 @@ pub async fn compile(
     }
     let world = world.as_mut().ok_or("World initialize failed")?;
     // world.reset(); todo: currently, nole only support single file opened, so we don't need to reset the world
-    world.virtual_source(world.main(), content)?;
+    world.virtual_source(world.main(), content.clone())?;
 
     let mut tracer = Tracer::new();
     let result = typst::compile(world, &mut tracer);
@@ -125,12 +180,42 @@ pub async fn compile(
         }
 
         // Print diagnostics.
-        Err(errors) => {
-            // let _ = window.emit("typst_compile", errors.deref()[0].message.as_str());
-            let err = &errors.deref()[0];
-            return Err(err.message.clone() + "\n" + err.hints.join("\n").as_str());
+        Err(diagnostics) => {
+            println!(
+                "compilation failed with {:?} diagnostics",
+                diagnostics.len()
+            );
+
+            let source = world.source(world.main());
+            let diagnostics: Vec<TypstDiagnostic> = match source {
+                Ok(source) => diagnostics
+                    .iter()
+                    .filter(|d| d.span.id() == Some(world.main()))
+                    .filter_map(|d| {
+                        let span = source.find(d.span)?;
+                        let range = span.range();
+                        let start = content[..range.start].chars().count();
+                        let size = content[range.start..range.end].chars().count();
+
+                        let message = d.message.to_string();
+                        Some(TypstDiagnostic {
+                            range: start..start + size,
+                            severity: match d.severity {
+                                Severity::Error => TypstDiagnosticSeverity::Error,
+                                Severity::Warning => TypstDiagnosticSeverity::Warning,
+                            },
+                            message,
+                            hints: d.hints.iter().map(|hint| hint.to_string()).collect(),
+                        })
+                    })
+                    .collect(),
+                Err(_) => vec![],
+            };
+            let _ = window.emit("typst::compile", diagnostics);
+            Err(EcoString::from("Compile failed!"))
         }
     }
+    // todo!()
 }
 
 /// reset the world and document at editor mount.

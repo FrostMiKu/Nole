@@ -3,7 +3,7 @@ import { useAtom } from "jotai";
 import { CurrentFileAtom } from "../lib/state";
 import Whiteboard from "./Whiteboard";
 import PictureViewer from "./PictureViewer";
-import { Editor } from "./Editor/Editor";
+import Editor from "./Editor/Editor";
 
 function Workspace() {
   const [currentFile, setCurrenFile] = useAtom(CurrentFileAtom);
