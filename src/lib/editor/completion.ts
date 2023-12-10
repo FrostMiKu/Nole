@@ -14,14 +14,11 @@ export class TypstCompletionProvider implements languages.CompletionItemProvider
     context: languages.CompletionContext,
     _: CancellationToken
   ): Promise<languages.CompletionList> {
-    console.log("completing", position, context);
     const { offset: completionOffset, completions } = await autocomplete(
       model.getValue(),
       model.getOffsetAt(position),
       context.triggerKind === CompletionTriggerKind.Invoke
     );
-    console.log("completed", completionOffset, completions);
-
     const completionPosition = model.getPositionAt(completionOffset);
     const range: IRange = {
       startLineNumber: completionPosition.lineNumber,
@@ -31,9 +28,7 @@ export class TypstCompletionProvider implements languages.CompletionItemProvider
     };
 
     return {
-      suggestions: completions.map((completion) => {
-        console.log(completion.kind);
-        
+      suggestions: completions.map((completion) => {        
         let kind = languages.CompletionItemKind.Snippet;
         switch (completion.kind) {
           case TypstCompletionKind.Syntax:
