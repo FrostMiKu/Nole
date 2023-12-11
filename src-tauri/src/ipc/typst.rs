@@ -130,8 +130,12 @@ pub async fn compile<R: Runtime>(
     workspace: PathBuf,
     path: PathBuf,
     content: String,
+    init: bool,
 ) -> StrResult<TypstCompileResponse> {
     let start = std::time::Instant::now();
+    if init {
+        engine.reset().map_err(|err| err.to_string())?;
+    }
     let mut world = engine
         .world_cache
         .lock()

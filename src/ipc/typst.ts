@@ -49,12 +49,14 @@ export const reset = async (): Promise<void> => {
 export const compile = async (
   workspace: string,
   path: string,
-  content: string
+  content: string,
+  init: boolean = false
 ): Promise<TypstCompileResult> => {
   return invoke("compile", {
     workspace: workspace,
     path: path,
     content: content,
+    init: init,
   });
 };
 

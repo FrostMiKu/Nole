@@ -10,7 +10,6 @@ import { TypstCompileResult, TypstDiagnostic, compile } from "../../ipc/typst";
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { listen } from "@tauri-apps/api/event";
-import { reset } from "../../ipc/typst";
 
 
 interface MonacoProps {
@@ -57,14 +56,15 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
           monaco.editor.setModelMarkers(model, "owner", markers);
         }
     });
-    const compileThrottled = asyncThrottle(async () => {
+    const compileThrottled = asyncThrottle(async (init:boolean=false) => {
         if (!editor || !file) return;
         const model = editor.getModel();
         if (!model) return;
         const document = await compile(
           window.nole.workspace(),
           file.path,
-          model.getValue()
+          model.getValue(),
+          init
         ).catch((error) => {
             console.debug(error);
             setState?.("error");
@@ -91,7 +91,7 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
       });
       // initial compile
       setState?.("compiling");
-      compileThrottled();
+      compileThrottled(true);
     return () => {
         disposer.then((dispose) => dispose());
     };
@@ -100,8 +100,6 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
   useEffect(() => {
     if (!divRef) return;
     initMonaco.then(async () => {
-      // reset typst cache
-      reset();
       setEditor((editor) => {
         if (editor) return editor;
         const newEditor = monaco.editor.create(divRef.current!, {
@@ -117,6 +115,9 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
           unicodeHighlight: { ambiguousCharacters: false },
         });
         fetchContent(newEditor, file!);
+        newEditor.addCommand(monaco.KeyMod.Alt|monaco.KeyCode.Enter, () => {
+          newEditor.getAction('editor.action.triggerSuggest')!.run();
+        });
         return newEditor;
       });
     });
