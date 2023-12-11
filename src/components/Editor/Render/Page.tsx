@@ -17,23 +17,22 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
   useEffect(() => {
     // setTimeout(() => {
     if (!canvasRef.current || !data || !image) return;
-    const dpr = window.devicePixelRatio || 1;
     const domWidth = Math.floor(width || canvasRef.current.clientWidth);
     const domHeight = Math.floor((domWidth * data.height) / data.width);
-    const densityWidth = domWidth * dpr;
-    const densityHeight = domHeight * dpr;
+    const densityWidth = domWidth * scale;
+    const densityHeight = domHeight * scale;
     canvasRef.current.style.width = domWidth + "px";
     canvasRef.current.style.height = domHeight + "px";
     canvasRef.current.width = densityWidth;
     canvasRef.current.height = densityHeight;
     const ctx = canvasRef.current.getContext("2d");
     if (ctx) {
-      ctx.scale(dpr, dpr);
+      ctx.scale(scale, scale);
       ctx.drawImage(image, 0, 0, domWidth, domHeight);
       setLoading(false);
     }
     // },20000); // emulate loading
-  }, [image, width]);
+  }, [image, width, scale]);
 
   useEffect(() => {
     render(page, scale).then((data) => {

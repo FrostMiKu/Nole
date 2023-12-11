@@ -6,7 +6,7 @@ import { autocomplete, TypstCompletionKind } from "../../ipc/typst";
 import CompletionTriggerKind = languages.CompletionTriggerKind;
 
 export class TypstCompletionProvider implements languages.CompletionItemProvider {
-  triggerCharacters = [" ", "(", "[", "{", "$", "@", "#", "."];
+  triggerCharacters = ["\"", "\'", "(", "[", "{", "$", "@", "#", "."];
 
   async provideCompletionItems(
     model: editor.ITextModel,

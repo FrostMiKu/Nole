@@ -31,11 +31,10 @@ function Ribbon(): JSX.Element {
       {
         name: "New Canvas",
         icon: "graph",
-        action: () => {
-          window.nole!.fs.tryCreateFile("Untitled.draw").then(async (file) => {
-            await file.writeAsBinary([]);
-            window.nole.fs.openFile(file.path);
-          });
+        action: async () => {
+          const file = await window.nole!.fs.tryCreateFile("Untitled.draw");
+          await file.writeAsBinary([]);
+          window.nole.fs.openFile(file.path);
         },
       },
     ]);
@@ -56,7 +55,7 @@ function Ribbon(): JSX.Element {
         </Button>
       ))}
       <div className="h-full"></div>
-      <Button 
+      <Button
         key="Help"
         title="Help"
         icon="help"

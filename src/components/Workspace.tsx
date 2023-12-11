@@ -4,6 +4,7 @@ import { CurrentFileAtom } from "../lib/state";
 import Whiteboard from "./Whiteboard";
 import PictureViewer from "./PictureViewer";
 import Editor from "./Editor/Editor";
+import Welcome from "./Welcome";
 
 function Workspace() {
   const [currentFile, setCurrenFile] = useAtom(CurrentFileAtom);
@@ -35,9 +36,10 @@ function Workspace() {
       }),
       window.nole!.fs.onMoved((oldpath, newpath) => {
         console.log("moved", oldpath, newpath, currentFile?.path);
-        if (currentFile?.path === oldpath) {
+        if (currentFile?.path.startsWith(oldpath)) {
           console.log("reopen");
-          window.nole!.fs.openFile(newpath);
+          const newFilepath = currentFile.path.replace(oldpath, newpath);
+          window.nole!.fs.openFile(newFilepath);
         }
       })
     );
@@ -46,11 +48,7 @@ function Workspace() {
     };
   }, [currentFile]);
 
-  let workspace = (
-    <div className="w-full h-full flex justify-center items-center text-2xl text-gray-400">
-      No file selected
-    </div>
-  );
+  let workspace = <Welcome/>;
 
   switch (currentFile?.extname) {
     case ".typ":

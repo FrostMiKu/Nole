@@ -11,7 +11,7 @@ import {
   PanelResizeHandle,
 } from "react-resizable-panels";
 import { UIEvent } from "./lib/bus";
-import Workspace from "./components/Workshop";
+import Workspace from "./components/Workspace";
 
 function App() {
   const fileTreeRef = useRef<ImperativePanelHandle | null>(null);
@@ -41,16 +41,16 @@ function App() {
         className="h-full w-full"
       >
         <Panel
-          defaultSizePercentage={15}
-          minSizePercentage={10}
-          maxSizePercentage={25}
+          defaultSizePixels={200}
+          minSizePixels={100}
+          maxSizePixels={300}
           collapsible
           className="w-full h-full"
           ref={fileTreeRef}
         >
           <FileTree />
         </Panel>
-        <PanelResizeHandle className="w-px bg-gray-200 focus:outline-none hover:bg-sky-200" />
+        <PanelResizeHandle className="w-0.5 focus:outline-none hover:bg-sky-200" />
         <Panel className="w-full h-full">
           <Workspace />
         </Panel>
