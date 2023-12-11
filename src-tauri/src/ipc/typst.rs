@@ -5,7 +5,7 @@ use serde_repr::Serialize_repr;
 use typst::diag::{Severity, EcoString};
 use typst::foundations::Datetime;
 use std::fs;
-use std::ops::{Deref, Range};
+use std::ops::Range;
 use std::path::PathBuf;
 use std::sync::Arc;
 use typst::eval::Tracer;
@@ -153,11 +153,9 @@ pub async fn compile<R: Runtime>(
             println!("Compile duration: {:?}", duration);
             let mut updated_idx: Vec<usize> = vec![];
             for (i, frame) in document.pages.iter().enumerate() {
-                {
-                    // If the frame is in the cache, skip it.
-                    if world.export_cache().is_cached(i, frame) {
-                        continue;
-                    }
+                // If the frame is in the cache, skip it.
+                if world.export_cache().is_cached(i, frame) {
+                    continue;
                 }
                 updated_idx.push(i);
             }

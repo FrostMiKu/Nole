@@ -10,6 +10,7 @@ import { TypstCompileResult, TypstDiagnostic, compile } from "../../ipc/typst";
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { listen } from "@tauri-apps/api/event";
+import { reset } from "../../ipc/typst";
 
 
 interface MonacoProps {
@@ -28,6 +29,9 @@ self.MonacoEnvironment = {
 const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState }) => {
   const divRef = useRef<HTMLDivElement>(null);
   const [editor, setEditor] = useState<ICodeEditor | null>(null);
+  const [debounceCancelFn, setDebounceCancelFn] = useState<(() => void) | null>(
+    null
+  );
 
   useEffect(() => {
     if (!editor || !file) return;
@@ -55,10 +59,12 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
     });
     const compileThrottled = asyncThrottle(async () => {
         if (!editor || !file) return;
+        const model = editor.getModel();
+        if (!model) return;
         const document = await compile(
           window.nole.workspace(),
           file.path,
-          editor.getValue()
+          model.getValue()
         ).catch((error) => {
             console.debug(error);
             setState?.("error");
@@ -71,8 +77,6 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
             setState?.("done");
         }
         // remove all markers
-        const model = editor.getModel();
-        if (!model) return;
         monaco.editor.setModelMarkers(model, "owner", []);
       });
       const compileHandler = debounce(
@@ -82,10 +86,11 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
       const autosaveHandler = autosave(window.nole.config.autosave_delay);
       editor.onDidChangeModelContent(() => {
         setState?.("compiling");
-        compileHandler();
+        setDebounceCancelFn(()=>compileHandler());
         autosaveHandler(file, editor);
       });
       // initial compile
+      setState?.("compiling");
       compileThrottled();
     return () => {
         disposer.then((dispose) => dispose());
@@ -95,6 +100,8 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
   useEffect(() => {
     if (!divRef) return;
     initMonaco.then(async () => {
+      // reset typst cache
+      reset();
       setEditor((editor) => {
         if (editor) return editor;
         const newEditor = monaco.editor.create(divRef.current!, {
@@ -115,8 +122,9 @@ const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState })
     });
     return () => {
       editor?.dispose();
+      debounceCancelFn?.();
     };
-  }, []);
+  }, [divRef]);
 
   return <div className={className} ref={divRef}></div>;
 };
