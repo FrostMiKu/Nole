@@ -10,27 +10,22 @@ import {
   PanelGroup,
   PanelResizeHandle,
 } from "react-resizable-panels";
-import { UIEvent } from "./lib/bus";
 import Workspace from "./components/Workspace";
+import { useToggleFileTree } from "./components/FileTree/utils";
+
+
 
 function App() {
   const fileTreeRef = useRef<ImperativePanelHandle | null>(null);
+  const willCollapse = useToggleFileTree();
 
   useEffect(() => {
-    const disposers: (() => void)[] = [];
-    disposers.push(
-      window.nole.bus.on(UIEvent.ToggleFileTree, () => {
-        if (fileTreeRef.current?.isCollapsed()) {
-          fileTreeRef.current?.expand();
-        } else {
-          fileTreeRef.current?.collapse();
-        }
-      })
-    );
-    return () => {
-      disposers.forEach((disposer) => disposer());
-    };
-  }, []);
+    if (willCollapse) {
+      fileTreeRef.current?.collapse();
+    } else {
+      fileTreeRef.current?.expand();
+    }
+  }, [willCollapse]);
 
   return (
     <div className="flex flex-row w-full h-screen select-none overflow-hidden">

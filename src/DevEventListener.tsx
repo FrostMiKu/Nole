@@ -6,28 +6,28 @@ function DevEventListener() {
     const disposers: (() => void)[] = [];
     disposers.push(
       window.nole!.fs.onFileOpened((file) => {
-        console.log("file open", file);
+        console.debug("file open", file);
       }),
       window.nole!.fs.onFileDeleted((filepath) => {
-        console.log("file deleted", filepath);
+        console.debug("file deleted", filepath);
       }),
       window.nole!.fs.onDirDeleted((dirpath) => {
-        console.log("dir deleted", dirpath);
+        console.debug("dir deleted", dirpath);
       }),
       window.nole!.fs.onMoved((oldpath, newpath) => {
-        console.log("file moved", oldpath, newpath);
+        console.debug("file moved", oldpath, newpath);
       }),
       window.nole.bus.on(FileEvent.FileWrittenBinary, (path, content) => {
-        console.log("file written binary", path, content);
+        console.debug("file written binary", path, content);
       }),
       window.nole.bus.on(FileEvent.FileWritten, (path, content) => {
-        console.log("file written", path, content);
+        console.debug("file written", path, content);
       }),
       window.nole.bus.on(FileEvent.FileRead, (content) => {
-        console.log("file read", content);
+        console.debug("file read", content);
       }),
       window.nole.bus.on(FileEvent.FileReadBinary, (content) => {
-        console.log("file read", content);
+        console.debug("file read", content);
       })
     );
     return () => {

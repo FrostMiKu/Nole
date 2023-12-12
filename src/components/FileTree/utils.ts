@@ -2,6 +2,23 @@ import { sortBy, randomString } from "remeda";
 import { FileEntry } from "@tauri-apps/api/fs";
 import { DataNode, Key } from "rc-tree/lib/interface";
 import path from "../../lib/path";
+import { useState, useSyncExternalStore } from "react";
+import { UIEvent } from "../../lib/bus";
+
+export const useToggleFileTree = () => {
+  const [willCollapse, setWillCollapse] = useState(false);
+  return useSyncExternalStore(
+    (callback) => {
+      return window.nole.bus.on(UIEvent.ToggleFileTree, () => {
+        setWillCollapse(!willCollapse);
+        callback();
+      });
+    },
+    () => {
+      return willCollapse;
+    }
+  );
+};
 
 export type FileTreeNode = {
   pathpoint: string;

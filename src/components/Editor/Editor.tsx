@@ -1,7 +1,7 @@
 import Render from "./Render/Render";
 import { CurrentFileAtom } from "../../lib/state";
 import { useAtom } from "jotai";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { TypstCompileResult, exportPDF } from "../../ipc/typst";
 import { Button, Intent, Spinner } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -10,13 +10,29 @@ import path from "../../lib/path";
 import { save } from "@tauri-apps/api/dialog";
 import Monaco from "./Monaco";
 
+export enum compileStatus {
+  idle = "idle",
+  compiling = "compiling",
+  done = "done",
+  error = "error",
+}
+
 const Editor: React.FC = () => {
   const [currentFile, _] = useAtom(CurrentFileAtom);
   const [renameing, setRenameing] = useState<boolean>(false);
   const [doc, setDoc] = useState<TypstCompileResult | null>(null);
-  const [compileStatus, setCompileStatus] = useState<
-    "idle" | "compiling" | "done" | "error"
-  >("idle");
+  const [currentCompileStatus, setCompileStatus] = useState<compileStatus>(compileStatus.idle);
+
+  const onStateChangedHandler = useCallback((state: compileStatus) => {
+    if (currentCompileStatus === state) return;
+    console.debug("state changed: ", currentCompileStatus, " >>>> ", state);
+    setCompileStatus(state);
+  },[])
+
+  const onCompiledHandler = useCallback((reslut: TypstCompileResult | null) => {
+    if (!reslut) return;
+    setDoc(reslut);
+  },[])
 
   const exportButton = (
     <Button
@@ -56,7 +72,7 @@ const Editor: React.FC = () => {
       {exportButton}
     </>
   );
-  if (compileStatus === "compiling") {
+  if (currentCompileStatus === compileStatus.compiling) {
     status = (
       <Spinner
         className="inline-block"
@@ -64,14 +80,14 @@ const Editor: React.FC = () => {
         intent={Intent.PRIMARY}
       ></Spinner>
     );
-  } else if (compileStatus === "done") {
+  } else if (currentCompileStatus === compileStatus.done) {
     status = (
       <>
         <span className="text-green-500">Compiled</span>
         {exportButton}
       </>
     );
-  } else if (compileStatus === "error") {
+  } else if (currentCompileStatus === compileStatus.error) {
     status = <span className="text-red-500">Error</span>;
   }
 
@@ -129,10 +145,9 @@ const Editor: React.FC = () => {
           className="shadow-md hover:shadow-lg rounded-lg bg-black"
         >
           <Monaco
-            className="w-full h-full select-text"
             file={currentFile}
-            onCompile={setDoc}
-            setState={setCompileStatus}
+            onCompiled={onCompiledHandler}
+            onStateChanged={onStateChangedHandler}
           />
         </Panel>
         <PanelResizeHandle className="w-1 hover:bg-sky-200 focus:outline-none" />

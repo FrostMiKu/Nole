@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { initMonaco } from "../../lib/editor/monaco";
 import { editor as editorType } from "monaco-editor";
-import ICodeEditor = editorType.ICodeEditor;
+import IStandaloneCodeEditor = editorType.IStandaloneCodeEditor;
 import IMarkerData = editorType.IMarkerData;
 import { fetchContent, autosave } from "./utils";
 import { NoleFile } from "../../lib/file";
@@ -10,13 +10,12 @@ import { TypstCompileResult, TypstDiagnostic, compile } from "../../ipc/typst";
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { listen } from "@tauri-apps/api/event";
-
+import { compileStatus } from "./Editor";
 
 interface MonacoProps {
   file: NoleFile | null;
-  className?: string;
-  onCompile?: (doc: TypstCompileResult | null) => void;
-  setState?: React.Dispatch<React.SetStateAction<"error" | "idle" | "compiling" | "done">>
+  onCompiled?: (doc: TypstCompileResult | null) => void;
+  onStateChanged?: (state: compileStatus) => void;
 }
 
 self.MonacoEnvironment = {
@@ -25,109 +24,130 @@ self.MonacoEnvironment = {
   },
 };
 
-const Monaco: React.FC<MonacoProps> = ({ file, className, onCompile, setState }) => {
+const Monaco: React.FC<MonacoProps> = ({
+  file,
+  onCompiled,
+  onStateChanged,
+}) => {
   const divRef = useRef<HTMLDivElement>(null);
-  const [editor, setEditor] = useState<ICodeEditor | null>(null);
+  // const [editor, setEditor] = useState<ICodeEditor | null>(null);
+  const editorRef = useRef<IStandaloneCodeEditor | null>(null);
   const [debounceCancelFn, setDebounceCancelFn] = useState<(() => void) | null>(
     null
   );
 
-  useEffect(() => {
-    if (!editor || !file) return;
-    const disposer = listen<TypstDiagnostic[]>("typst::compile", ({ payload:diagnostics }) => {        
-        if (!editor) return;
-        const model = editor.getModel();
-        if (model) {
-          const markers: IMarkerData[] =
-            diagnostics?.map(({ range, severity, message, hints }) => {
-              const start = model.getPositionAt(range.start);
-              const end = model.getPositionAt(range.end);
-              return {
-                startLineNumber: start.lineNumber,
-                startColumn: start.column,
-                endLineNumber: end.lineNumber,
-                endColumn: end.column,
-                message: message + "\n" + hints.map((hint) => `hint: ${hint}`).join("\n"),
-                severity:
-                  severity === "error" ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
-              };
-            }) ?? [];
-  
-          monaco.editor.setModelMarkers(model, "owner", markers);
-        }
-    });
-    const compileThrottled = asyncThrottle(async (init:boolean=false) => {
-        if (!editor || !file) return;
-        const model = editor.getModel();
-        if (!model) return;
-        const document = await compile(
-          window.nole.workspace(),
-          file.path,
-          model.getValue(),
-          init
-        ).catch((error) => {
-            console.debug(error);
-            setState?.("error");
-        });
-        if (!document) return;
-        if (document.updated_idx.length === 0) {
-          setState?.("idle");
-        } else {
-            onCompile?.(document);
-            setState?.("done");
-        }
-        // remove all markers
-        monaco.editor.setModelMarkers(model, "owner", []);
+  const compileThrottled = useCallback(
+    asyncThrottle(async (init: boolean = false) => {
+      if (!editorRef.current || !file) return;
+      const model = editorRef.current.getModel();
+      if (!model) return;
+      console.log("compiling!");
+      const document = await compile(
+        window.nole.workspace(),
+        file.path,
+        model.getValue(),
+        init
+      ).catch((error) => {
+        console.debug(error);
+        onStateChanged?.(compileStatus.error);
       });
-      const compileHandler = debounce(
-        compileThrottled,
-        window.nole.config.compile_delay
-      );
-      const autosaveHandler = autosave(window.nole.config.autosave_delay);
-      editor.onDidChangeModelContent(() => {
-        setState?.("compiling");
-        setDebounceCancelFn(()=>compileHandler());
-        autosaveHandler(file, editor);
-      });
-      // initial compile
-      setState?.("compiling");
-      compileThrottled(true);
-    return () => {
-        disposer.then((dispose) => dispose());
-    };
-  }, [editor]);
+      if (!document) return;
+      if (document.updated_idx.length === 0) {
+        onStateChanged?.(compileStatus.idle);
+      } else {
+        onCompiled?.(document);
+        onStateChanged?.(compileStatus.done);
+      }
+      // remove all markers
+      monaco.editor.setModelMarkers(model, "owner", []);
+    }),
+    []
+  );
+
+  const compileHandler = useCallback(
+    debounce(compileThrottled, window.nole.config.compile_delay),
+    [compileThrottled]
+  );
+
+  const autosaveHandler = useCallback(
+    autosave(window.nole.config.autosave_delay),
+    []
+  );
 
   useEffect(() => {
-    if (!divRef) return;
-    initMonaco.then(async () => {
-      setEditor((editor) => {
-        if (editor) return editor;
-        const newEditor = monaco.editor.create(divRef.current!, {
-          lineHeight: 1.8,
-          automaticLayout: true,
-          readOnly: true,
-          folding: true,
-          quickSuggestions: false,
-          wordWrap: "on",
-          minimap: {
-            enabled: true,
-          },
-          unicodeHighlight: { ambiguousCharacters: false },
-        });
-        fetchContent(newEditor, file!);
-        newEditor.addCommand(monaco.KeyMod.Alt|monaco.KeyCode.Enter, () => {
-          newEditor.getAction('editor.action.triggerSuggest')!.run();
-        });
-        return newEditor;
+    if (!divRef.current || editorRef.current ) return;
+    let disposer: Promise<()=>void>;
+    const timer = setTimeout(() => {
+    initMonaco.then(() => {
+      editorRef.current = monaco.editor.create(divRef.current!, {
+        accessibilitySupport: "off",
+        lineHeight: 1.8,
+        automaticLayout: true,
+        readOnly: true,
+        folding: true,
+        quickSuggestions: false,
+        wordWrap: "on",
+        minimap: {
+          enabled: true,
+        },
+        unicodeHighlight: { ambiguousCharacters: false },
       });
+      disposer = listen<TypstDiagnostic[]>(
+        "typst::compile",
+        ({ payload: diagnostics }) => {
+          if (!editorRef.current) return;
+          const model = editorRef.current.getModel();
+          if (model) {
+            const markers: IMarkerData[] =
+              diagnostics?.map(({ range, severity, message, hints }) => {
+                const start = model.getPositionAt(range.start);
+                const end = model.getPositionAt(range.end);
+                return {
+                  startLineNumber: start.lineNumber,
+                  startColumn: start.column,
+                  endLineNumber: end.lineNumber,
+                  endColumn: end.column,
+                  message:
+                    message +
+                    "\n" +
+                    hints.map((hint) => `hint: ${hint}`).join("\n"),
+                  severity:
+                    severity === "error"
+                      ? monaco.MarkerSeverity.Error
+                      : monaco.MarkerSeverity.Warning,
+                };
+              }) ?? [];
+            monaco.editor.setModelMarkers(model, "owner", markers);
+          }
+        }
+      );
+      // editorRef.current.onDidCompositionEnd(() => { }); // TODO: handle IME
+      editorRef.current.onDidChangeModelContent(() => {
+        onStateChanged?.(compileStatus.compiling);
+        setDebounceCancelFn(() => compileHandler());
+        autosaveHandler(file, editorRef.current);
+      });
+      fetchContent(editorRef.current, file!).then(()=>{
+        // initial compile
+        onStateChanged?.(compileStatus.compiling);
+        compileThrottled(true);
+      })
+      editorRef.current.addCommand(
+        monaco.KeyMod.Alt | monaco.KeyCode.Enter,
+        () => {
+          editorRef.current!.getAction("editor.action.triggerSuggest")!.run();
+        }
+      );
     });
+  }, 0); // for strict mode
     return () => {
-      editor?.dispose();
+      editorRef.current ? editorRef.current.dispose():clearTimeout(timer);
+      disposer?.then((dispose)=>dispose());
       debounceCancelFn?.();
     };
-  }, [divRef]);
+  }, []);
 
-  return <div className={className} ref={divRef}></div>;
+  return <div className="w-full h-full select-text" ref={divRef}></div>;
 };
 
 export default Monaco;

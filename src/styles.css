@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
-.typst-doc {
-    @apply bg-gray-100 w-full h-full;
+/* 隐藏滚动条，但仍允许滚动 */
+body {
+    -ms-overflow-style: none;  /* IE 和 Edge */
+}
+  
+body::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari, Opera */
 }
