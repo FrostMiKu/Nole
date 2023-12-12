@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { TypstRenderResult, render } from "../../../ipc/typst";
+import { useUnmount } from "ahooks"
 
 export interface PageProps {
   page: number;
@@ -13,6 +14,14 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
   const [image, setImage] = useState<CanvasImageSource>();
   const [data, setData] = useState<TypstRenderResult>();
   const [loading, setLoading] = useState<boolean>(true);
+
+  useUnmount(() => {
+    if (image) {
+      (image as any).src = null;
+      (image as any).remove();
+      canvasRef.current?.remove();
+    }
+  });
 
   useEffect(() => {
     // setTimeout(() => {
@@ -35,15 +44,20 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
   }, [image, width, scale]);
 
   useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setImage(img);
+    };
     render(page, Math.ceil(scale)).then((data) => {
       setData(data);
       const url = "data:image/png;base64," + data.frame;
-      const img = new Image();
-      img.onload = () => {
-        setImage(img);
-      };
       img.src = url;
     });
+    return () => {
+      img.onload = null;
+      img.src = "";
+      img.remove();
+    };
   }, [update]);
 
   const className = useMemo(() => {

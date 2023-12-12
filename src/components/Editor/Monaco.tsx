@@ -141,6 +141,7 @@ const Monaco: React.FC<MonacoProps> = ({
     });
   }, 0); // for strict mode
     return () => {
+      editorRef.current?.getModel()?.dispose();
       editorRef.current ? editorRef.current.dispose():clearTimeout(timer);
       disposer?.then((dispose)=>dispose());
       debounceCancelFn?.();
