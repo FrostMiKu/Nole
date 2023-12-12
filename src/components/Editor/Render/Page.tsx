@@ -36,8 +36,8 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
     canvasRef.current.height = densityHeight;
     const ctx = canvasRef.current.getContext("2d");
     if (ctx) {
-      ctx.scale(scale, scale);
-      ctx.drawImage(image, 0, 0, domWidth, domHeight);
+      // ctx.scale(scale, scale);
+      ctx.drawImage(image, 0, 0, densityWidth, densityHeight);
       setLoading(false);
     }
     // },20000); // emulate loading

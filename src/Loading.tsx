@@ -7,6 +7,7 @@ import { useCallback, useEffect } from "react";
 import { AnchorButton } from "@blueprintjs/core";
 import { throttle } from "./lib/utils";
 import { exists } from "@tauri-apps/api/fs";
+import { initMonaco } from "./lib/editor/monaco";
 
 function Loading() {
   const [appInitialized, setAppInitialized] = useAtom(AppInitializedAtom);
@@ -20,8 +21,10 @@ function Loading() {
       if (dirpath === null) return;
 
       window.nole = new Nole(dirpath as string);
-      setCurrenFile(null);
-      setAppInitialized(true);
+      initMonaco.then(() => {
+        setCurrenFile(null);
+        setAppInitialized(true);
+      });
     });
   }, 1000),[])
 

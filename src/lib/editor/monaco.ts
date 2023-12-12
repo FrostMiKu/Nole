@@ -48,5 +48,6 @@ export const initMonaco = (async () => {
 
   monaco.editor.defineTheme("dracula", theme as monaco.editor.IStandaloneThemeData);
   monaco.editor.setTheme("dracula");
-  monaco.editor.remeasureFonts()
+  monaco.editor.remeasureFonts();
+  console.log("Monaco initialized");
 })();

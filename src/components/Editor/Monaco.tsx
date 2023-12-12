@@ -78,7 +78,7 @@ const Monaco: React.FC<MonacoProps> = ({
     if (!divRef.current || editorRef.current ) return;
     let disposer: Promise<()=>void>;
     const timer = setTimeout(() => {
-    initMonaco.then(() => {
+    // initMonaco.then(() => {
       editorRef.current = monaco.editor.create(divRef.current!, {
         accessibilitySupport: "off",
         lineHeight: 1.8,
@@ -138,7 +138,7 @@ const Monaco: React.FC<MonacoProps> = ({
           editorRef.current!.getAction("editor.action.triggerSuggest")!.run();
         }
       );
-    });
+    // });
   }, 0); // for strict mode
     return () => {
       editorRef.current?.getModel()?.dispose();
