@@ -4,11 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 隐藏滚动条，但仍允许滚动 */
-body {
-    -ms-overflow-style: none;  /* IE 和 Edge */
+::-webkit-scrollbar {
+    width: 2px;
 }
-  
-body::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari, Opera */
+
+::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300;
 }
