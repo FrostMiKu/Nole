@@ -9,9 +9,11 @@ export interface RenderProps {
   doc: TypstCompileResult | null;
 }
 
+const devicePixelRatio = window.devicePixelRatio;
+
 const Render: React.FC<RenderProps> = ({ doc }) => {
   const renderRef = useRef<HTMLDivElement>(null);
-  const [scale, _] = useState<number>(2); // todo: [1, 2, 3, 4, 5]
+  const [scale, _] = useState<number>(devicePixelRatio); // todo: [1, 2, 3, 4, 5]
   const [pages, setPages] = useState<PageProps[]>([]);
   const [renderWidth, setRenderWidth] = useState<number | null>(null);
   const [scollTop, setScrollTop] = useState<number>(0);

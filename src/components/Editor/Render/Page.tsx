@@ -35,7 +35,7 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
   }, [image, width, scale]);
 
   useEffect(() => {
-    render(page, scale).then((data) => {
+    render(page, Math.ceil(scale)).then((data) => {
       setData(data);
       const url = "data:image/png;base64," + data.frame;
       const img = new Image();
