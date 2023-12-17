@@ -149,6 +149,7 @@ pub async fn compile<R: Runtime>(
 
     let mut tracer = Tracer::new();
     let result = typst::compile(world, &mut tracer);
+    comemo::evict(3);
 
     match result {
         // Export the SVG.

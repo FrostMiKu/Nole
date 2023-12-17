@@ -2,12 +2,13 @@
   "build": {
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
+    "withGlobalTauri": true,
     "devPath": "http://localhost:1420",
     "distDir": "../dist"
   },
   "package": {
     "productName": "Nole",
-    "version": "0.9.2"
+    "version": "0.9.3"
   },
   "tauri": {
     "allowlist": {
@@ -46,7 +47,7 @@
       ]
     },
     "security": {
-      "csp": "default-src * 'self' 'unsafe-inline' data: asset://localhost; script-src 'self' asset://localhost 'unsafe-eval'"
+      "csp": "default-src blob: data: filesystem: ws: wss: http: https: tauri: 'unsafe-eval' 'unsafe-inline' 'self' img-src: 'self'"
     },
     "windows": [
       {

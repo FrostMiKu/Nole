@@ -5,17 +5,24 @@ mod engine;
 mod ipc;
 
 use engine::TypstEngine;
-use tauri::Manager;
 use std::sync::Arc;
+use tauri::Manager;
 
 fn main() {
     // let engine = Arc::new(TypstEngine::new());
     let engine = Arc::new(TypstEngine::new());
-
+    // initialize the custom invoke system as a HTTP server, allowing the given origins to access it.
+    let http = tauri_invoke_http::Invoke::new(if cfg!(feature = "custom-protocol") {
+        ["tauri://localhost"]
+    } else {
+        ["http://localhost:1420"]
+    });
     tauri::Builder::default()
-        .setup(|app| {
+    .invoke_system(http.initialization_script(), http.responder())
+        .setup(move |app| {
             #[cfg(debug_assertions)] // only include this code on debug builds
             {
+                http.start(app.handle());
                 let window = app.get_window("main").unwrap();
                 window.open_devtools();
                 //   window.close_devtools();

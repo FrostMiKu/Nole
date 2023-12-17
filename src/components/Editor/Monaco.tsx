@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { initMonaco } from "../../lib/editor/monaco";
+// import { initMonaco } from "../../lib/editor/monaco";
 import { editor as editorType } from "monaco-editor";
 import IStandaloneCodeEditor = editorType.IStandaloneCodeEditor;
 import IMarkerData = editorType.IMarkerData;
@@ -41,6 +41,7 @@ const Monaco: React.FC<MonacoProps> = ({
       if (!editorRef.current || !file) return;
       const model = editorRef.current.getModel();
       if (!model) return;
+      onStateChanged?.(compileStatus.compiling);
       console.log("compiling!");
       const document = await compile(
         window.nole.workspace(),
@@ -51,6 +52,7 @@ const Monaco: React.FC<MonacoProps> = ({
         console.debug(error);
         onStateChanged?.(compileStatus.error);
       });
+
       if (!document) return;
       if (document.updated_idx.length === 0) {
         onStateChanged?.(compileStatus.idle);
@@ -123,7 +125,6 @@ const Monaco: React.FC<MonacoProps> = ({
       );
       // editorRef.current.onDidCompositionEnd(() => { }); // TODO: handle IME
       editorRef.current.onDidChangeModelContent(() => {
-        onStateChanged?.(compileStatus.compiling);
         setDebounceCancelFn(() => compileHandler());
         autosaveHandler(file, editorRef.current);
       });

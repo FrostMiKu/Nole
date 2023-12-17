@@ -84,7 +84,6 @@ impl NoleWorld {
         for slot in self.slots.get_mut().values_mut() {
             slot.reset();
         }
-        self.export_cache.cache.clear();
         self.now.take();
     }
 

@@ -21,18 +21,18 @@ const Editor: React.FC = () => {
   const [currentFile, _] = useAtom(CurrentFileAtom);
   const [renameing, setRenameing] = useState<boolean>(false);
   const [doc, setDoc] = useState<TypstCompileResult | null>(null);
-  const [currentCompileStatus, setCompileStatus] = useState<compileStatus>(compileStatus.idle);
+  const [currentCompileStatus, setCompileStatus] = useState<compileStatus>(
+    compileStatus.idle
+  );
 
   const onStateChangedHandler = useCallback((state: compileStatus) => {
-    if (currentCompileStatus === state) return;
-    console.debug("state changed: ", currentCompileStatus, " >>>> ", state);
     setCompileStatus(state);
-  },[])
+  }, []);
 
   const onCompiledHandler = useCallback((reslut: TypstCompileResult | null) => {
     if (!reslut) return;
     setDoc(reslut);
-  },[])
+  }, []);
 
   const exportButton = (
     <Button
@@ -66,13 +66,15 @@ const Editor: React.FC = () => {
     ></Button>
   );
 
-  let status = (
-    <>
-      <span className="text-green-500">Cached</span>
-      {exportButton}
-    </>
-  );
-  if (currentCompileStatus === compileStatus.compiling) {
+  let status = <></>;
+  if (currentCompileStatus === compileStatus.idle) {
+    status = (
+      <>
+        <span className="text-green-500">Cached</span>
+        {exportButton}
+      </>
+    );
+  } else if (currentCompileStatus === compileStatus.compiling) {
     status = (
       <Spinner
         className="inline-block"

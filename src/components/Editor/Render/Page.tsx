@@ -19,7 +19,7 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
     if (image) {
       (image as any).src = null;
       (image as any).remove();
-      canvasRef.current?.remove();
+      // canvasRef.current?.remove();
     }
   });
 
