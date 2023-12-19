@@ -20,9 +20,9 @@ fn main() {
     tauri::Builder::default()
     .invoke_system(http.initialization_script(), http.responder())
         .setup(move |app| {
+            http.start(app.handle());
             #[cfg(debug_assertions)] // only include this code on debug builds
             {
-                http.start(app.handle());
                 let window = app.get_window("main").unwrap();
                 window.open_devtools();
                 //   window.close_devtools();

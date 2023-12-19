@@ -5,7 +5,7 @@ export interface AppConfig {
 }
 
 export const default_config = {
-    resize_render_delay: 200,
+    resize_render_delay: 100,
     compile_delay: 0,
     autosave_delay: 1000,
 } as AppConfig;

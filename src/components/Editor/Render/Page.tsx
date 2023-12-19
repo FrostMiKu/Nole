@@ -48,7 +48,7 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
     img.onload = () => {
       setImage(img);
     };
-    render(page, Math.ceil(scale)).then((data) => {
+    render(page, Math.ceil(window.devicePixelRatio)).then((data) => {
       setData(data);
       const url = "data:image/png;base64," + data.frame;
       img.src = url;

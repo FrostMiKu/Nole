@@ -241,6 +241,7 @@ pub async fn render(
     let now = std::time::Instant::now();
     let frame = document.as_ref().ok_or("Document not initialized!")?.pages[page].clone();
     let bmp = typst_render::render(&frame, scale, Color::WHITE);
+    comemo::evict(0);
     let elapsed = now.elapsed();
     println!("Render page {:?} duration: {:?}", page, elapsed);
     return bmp
