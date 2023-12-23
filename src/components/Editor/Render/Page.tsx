@@ -17,7 +17,8 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
 
   useUnmount(() => {
     if (image) {
-      (image as any).src = null;
+      (image as any).onload = null;
+      (image as any).src = '';
       (image as any).remove();
       // canvasRef.current?.remove();
     }

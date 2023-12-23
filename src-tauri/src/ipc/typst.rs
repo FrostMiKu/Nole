@@ -149,7 +149,7 @@ pub async fn compile<R: Runtime>(
 
     let mut tracer = Tracer::new();
     let result = typst::compile(world, &mut tracer);
-    comemo::evict(3);
+    comemo::evict(1);
 
     match result {
         // Export the SVG.
@@ -241,7 +241,6 @@ pub async fn render(
     let now = std::time::Instant::now();
     let frame = document.as_ref().ok_or("Document not initialized!")?.pages[page].clone();
     let bmp = typst_render::render(&frame, scale, Color::WHITE);
-    comemo::evict(0);
     let elapsed = now.elapsed();
     println!("Render page {:?} duration: {:?}", page, elapsed);
     return bmp
