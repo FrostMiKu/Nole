@@ -1,19 +1,19 @@
+use crate::engine::{NoleWorld, TypstEngine};
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{Datelike, Timelike};
 use serde::Serialize;
 use serde_repr::Serialize_repr;
-use typst::diag::{Severity, EcoString};
-use typst::foundations::Datetime;
 use std::fs;
 use std::ops::Range;
 use std::path::PathBuf;
 use std::sync::Arc;
+use tauri::Runtime;
+use typst::diag::{EcoString, Severity};
 use typst::eval::Tracer;
+use typst::foundations::Datetime;
 use typst::World;
 use typst::{diag::StrResult, visualize::Color};
 use typst_ide::{Completion, CompletionKind};
-use tauri::Runtime;
-use crate::engine::{NoleWorld, TypstEngine};
 
 #[derive(Serialize_repr, Debug)]
 #[repr(u8)]
@@ -223,8 +223,23 @@ pub async fn compile<R: Runtime>(
 
 /// reset the world and document at editor mount.
 #[tauri::command]
-pub async fn reset(engine: tauri::State<'_, Arc<TypstEngine>>,) -> Result<(), String> {
+pub async fn reset(engine: tauri::State<'_, Arc<TypstEngine>>) -> Result<(), String> {
     engine.reset().map_err(|err| err.to_string())
+}
+
+/// render the svg of the page.
+#[tauri::command]
+pub async fn svg(engine: tauri::State<'_, Arc<TypstEngine>>, page: usize) -> Result<String, String> {
+    let document = engine
+        .document_cache
+        .read()
+        .map_err(|_| "Read document failed!")?;
+    let now = std::time::Instant::now();
+    let frame = document.as_ref().ok_or("Document not initialized!")?.pages[page].clone();
+    let svg = typst_svg::svg(&frame);
+    let elapsed = now.elapsed();
+    println!("Render page {:?} duration: {:?}", page, elapsed);
+    Ok(svg)
 }
 
 /// Returns whether it render without errors.
@@ -269,7 +284,11 @@ pub async fn export(
         .map_err(|_| "Read document failed!")?;
     let timer = std::time::Instant::now();
 
-    let pdf = typst_pdf::pdf(document.as_ref().ok_or("can not get ducument.")?, Some(&id), now());
+    let pdf = typst_pdf::pdf(
+        document.as_ref().ok_or("can not get ducument.")?,
+        Some(&id),
+        now(),
+    );
     let elapsed = timer.elapsed();
     println!("Export pdf duration: {:?}", elapsed);
     fs::write(path, pdf)

@@ -2,14 +2,14 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import { TypstRenderResult, render } from "../../../ipc/typst";
 import { useUnmount } from "ahooks"
 
-export interface PageProps {
+export interface ImagePageProps {
   page: number;
   update: string; // force update when this changes
   scale: number;
   width?: number;
 }
 
-const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
+const ImagePage: React.FC<ImagePageProps> = ({ page, update, scale, width }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [image, setImage] = useState<CanvasImageSource>();
   const [data, setData] = useState<TypstRenderResult>();
@@ -75,4 +75,4 @@ const Page: React.FC<PageProps> = ({ page, update, scale, width }) => {
   return <canvas ref={canvasRef} className={className}></canvas>;
 };
 
-export default Page;
+export default ImagePage;

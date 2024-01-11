@@ -3,12 +3,13 @@ import { CurrentFileAtom } from "../../lib/state";
 import { useAtom } from "jotai";
 import { useCallback, useState } from "react";
 import { TypstCompileResult, exportPDF } from "../../ipc/typst";
-import { Button, Intent, Spinner } from "@blueprintjs/core";
+import { Button, Intent, Spinner, Switch } from "@blueprintjs/core";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import OnceInputer from "../OnceInputer";
 import path from "../../lib/path";
 import { save } from "@tauri-apps/api/dialog";
 import Monaco from "./Monaco";
+import { useLocalStorageState } from "ahooks";
 
 export enum compileStatus {
   idle = "idle",
@@ -20,9 +21,16 @@ export enum compileStatus {
 const Editor: React.FC = () => {
   const [currentFile, _] = useAtom(CurrentFileAtom);
   const [renameing, setRenameing] = useState<boolean>(false);
+  // const [renderSvg, setRenderSvg] = useState<boolean>(true);
   const [doc, setDoc] = useState<TypstCompileResult | null>(null);
   const [currentCompileStatus, setCompileStatus] = useState<compileStatus>(
     compileStatus.idle
+  );
+  const [renderSvg, setRenderSvg] = useLocalStorageState<boolean>(
+    'rendderAsSvg',
+    {
+      defaultValue: true,
+    },
   );
 
   const onStateChangedHandler = useCallback((state: compileStatus) => {
@@ -33,6 +41,18 @@ const Editor: React.FC = () => {
     if (!reslut) return;
     setDoc(reslut);
   }, []);
+
+  const renderSwitcher = (
+    <Switch
+      className="mt-2"
+      checked={renderSvg}
+      onChange={e=>{
+        setRenderSvg(e.currentTarget.checked);
+      }}
+      innerLabel="PNG"
+      innerLabelChecked="SVG"
+    />
+  )
 
   const exportButton = (
     <Button
@@ -132,7 +152,8 @@ const Editor: React.FC = () => {
         <div
           id="statusbar"
           className="h-full flex justify-center items-center gap-1"
-        >
+          >
+          {renderSwitcher}
           {status}
         </div>
       </div>
@@ -154,7 +175,7 @@ const Editor: React.FC = () => {
         </Panel>
         <PanelResizeHandle className="w-1 hover:bg-sky-200 focus:outline-none" />
         <Panel defaultSizePercentage={50} minSizePercentage={20}>
-          <Render doc={doc} />
+          <Render doc={doc} renderSvg={renderSvg===undefined?true:renderSvg} />
         </Panel>
       </PanelGroup>
     </div>

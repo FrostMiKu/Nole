@@ -1,22 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TypstCompileResult } from "../../../ipc/typst";
-import Page, { PageProps } from "./Page";
+import ImagePage, { ImagePageProps } from "./ImagePage";
 import { randomString } from "remeda";
 import { ResizeEntry, ResizeSensor } from "@blueprintjs/core";
 import { debounce } from "../../../lib/utils";
+import SvgPage from "./SvgPage";
 
 export interface RenderProps {
   doc: TypstCompileResult | null;
+  renderSvg: boolean;
 }
 
 const devicePixelRatio = window.devicePixelRatio;
 
-const Render: React.FC<RenderProps> = ({ doc }) => {
+const Render: React.FC<RenderProps> = ({ doc, renderSvg }) => {
   const renderRef = useRef<HTMLDivElement>(null);
   const [scale, _] = useState<number>(devicePixelRatio); // todo: [1, 2, 3, 4, 5]
-  const [pages, setPages] = useState<PageProps[]>([]);
+  const [pages, setPages] = useState<ImagePageProps[]>([]);
   const [renderWidth, setRenderWidth] = useState<number | null>(null);
   const [scollTop, setScrollTop] = useState<number>(0);
+
+  console.log(renderSvg);
+  
 
   useEffect(() => {
     if (!renderRef.current) return;
@@ -64,7 +69,15 @@ const Render: React.FC<RenderProps> = ({ doc }) => {
       >
         {pages.map((item) => {
           return (
-            <Page
+            renderSvg?
+            <SvgPage
+              key={item.page}
+              page={item.page}
+              update={item.update}
+              width={renderWidth ? renderWidth : undefined}
+            />
+            :
+            <ImagePage
               key={item.page}
               page={item.page}
               update={item.update}

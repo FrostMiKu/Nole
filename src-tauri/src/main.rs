@@ -34,6 +34,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             ipc::reset,
             ipc::compile,
+            ipc::svg,
             ipc::render,
             ipc::autocomplete,
             ipc::export,

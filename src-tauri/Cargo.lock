@@ -2354,6 +2354,7 @@ dependencies = [
  "typst-ide",
  "typst-pdf",
  "typst-render",
+ "typst-svg",
 ]
 
 [[package]]
@@ -4481,6 +4482,22 @@ dependencies = [
  "ttf-parser",
  "typst",
  "usvg",
+]
+
+[[package]]
+name = "typst-svg"
+version = "0.10.0"
+source = "git+https://github.com/typst/typst.git?tag=v0.10.0#70ca0d257bb4ba927f63260e20443f244e0bb58c"
+dependencies = [
+ "base64 0.21.5",
+ "comemo",
+ "ecow",
+ "flate2",
+ "tracing",
+ "ttf-parser",
+ "typst",
+ "xmlparser",
+ "xmlwriter",
 ]
 
 [[package]]

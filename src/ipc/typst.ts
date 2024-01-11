@@ -60,6 +60,12 @@ export const compile = async (
   });
 };
 
+export const svg = async (
+  page: number,
+): Promise<string> => {
+  return invoke("svg", { page: page });
+}
+
 export const render = async (
   page: number,
   scale: number
