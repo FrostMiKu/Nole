@@ -204,7 +204,7 @@ export class FileManager {
   async pasteImage(filepath: string): Promise<string> {
     filepath = await this.withinRoot(filepath)!;
     const imagePathAbs = await pasteImage(filepath);
-    return imagePathAbs.replace(this.root, ".");
+    return imagePathAbs.replace(path.dirname(filepath), ".");
   }
 
   openExplorer(dirpath: string): Promise<void> {
