@@ -39,6 +39,7 @@ fn main() {
             ipc::export,
             ipc::delete,
             ipc::get_available_path,
+            ipc::paste_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

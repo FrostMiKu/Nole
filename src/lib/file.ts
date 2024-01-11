@@ -4,6 +4,7 @@ import { FileEntry } from "@tauri-apps/api/fs";
 import { EventBus, FileEvent } from "./bus";
 import { open } from "@tauri-apps/api/shell";
 import { deleteToTrash, getAvailablePath } from "../ipc/fs";
+import { pasteImage } from "../ipc/clipboard";
 import path from "./path";
 
 type BinaryFileContents = Iterable<number> | ArrayLike<number> | ArrayBuffer;
@@ -198,6 +199,12 @@ export class FileManager {
   }
   onMoved(listener: (oldpath: string, newpath: string) => void) {
     return this.bus.on(FileEvent.FileMoved, listener);
+  }
+
+  async pasteImage(filepath: string): Promise<string> {
+    filepath = await this.withinRoot(filepath)!;
+    const imagePathAbs = await pasteImage(filepath);
+    return imagePathAbs.replace(this.root, ".");
   }
 
   openExplorer(dirpath: string): Promise<void> {

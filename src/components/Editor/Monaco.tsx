@@ -11,6 +11,7 @@ import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { listen } from "@tauri-apps/api/event";
 import { compileStatus } from "./Editor";
+import path from "../../lib/path";
 
 interface MonacoProps {
   file: NoleFile | null;
@@ -76,11 +77,52 @@ const Monaco: React.FC<MonacoProps> = ({
     []
   );
 
+  const pasteHandler = useCallback(async (event: ClipboardEvent) => {
+    console.log("paste");
+    if (!file || !editorRef.current) return;
+    const text = event.clipboardData?.getData("text");
+    const range = editorRef.current.getSelection();
+    const model = editorRef.current.getModel();
+
+    if (text === "" || !text ) {
+      const res = await window.nole.fs.pasteImage(
+        path.join(file!.parent, "images")
+      );
+      window.nole.notify.info({
+        content: `Pasted image at ${res}`,
+      });
+      if (range && model) {
+        model.pushEditOperations(
+          [],
+          [
+            {
+              range: range,
+              text: `\n#figure(\n  image("${res}"),\n  caption: []\n)\n`,
+            },
+          ],
+          () => null
+        );
+      }
+    }else{
+      if (range && model) {
+        model.pushEditOperations(
+          [],
+          [
+            {
+              range: range,
+              text: text,
+            },
+          ],
+          () => null
+        );
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    if (!divRef.current || editorRef.current ) return;
-    let disposer: Promise<()=>void>;
+    if (!divRef.current || editorRef.current) return;
+    let disposer: Promise<() => void>;
     const timer = setTimeout(() => {
-    // initMonaco.then(() => {
       editorRef.current = monaco.editor.create(divRef.current!, {
         accessibilitySupport: "off",
         lineHeight: 1.8,
@@ -128,28 +170,27 @@ const Monaco: React.FC<MonacoProps> = ({
         setDebounceCancelFn(() => compileHandler());
         autosaveHandler(file, editorRef.current);
       });
-      fetchContent(editorRef.current, file!).then(()=>{
+      fetchContent(editorRef.current, file!).then(() => {
         // initial compile
         onStateChanged?.(compileStatus.compiling);
         compileThrottled(true);
-      })
+      });
       editorRef.current.addCommand(
         monaco.KeyMod.Alt | monaco.KeyCode.Enter,
         () => {
           editorRef.current!.getAction("editor.action.triggerSuggest")!.run();
         }
       );
-    // });
-  }, 0); // for strict mode
+    }, 0); // for strict mode
     return () => {
       editorRef.current?.getModel()?.dispose();
-      editorRef.current ? editorRef.current.dispose():clearTimeout(timer);
-      disposer?.then((dispose)=>dispose());
+      editorRef.current ? editorRef.current.dispose() : clearTimeout(timer);
+      disposer?.then((dispose) => dispose());
       debounceCancelFn?.();
     };
   }, []);
 
-  return <div className="w-full h-full select-text" ref={divRef}></div>;
+  return <div className="w-full h-full select-text" onPasteCapture={e=>pasteHandler(e.nativeEvent)} ref={divRef}></div>;
 };
 
 export default Monaco;
