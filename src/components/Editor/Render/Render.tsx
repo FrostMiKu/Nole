@@ -18,10 +18,7 @@ const Render: React.FC<RenderProps> = ({ doc, renderSvg }) => {
   const [scale, _] = useState<number>(devicePixelRatio); // todo: [1, 2, 3, 4, 5]
   const [pages, setPages] = useState<ImagePageProps[]>([]);
   const [renderWidth, setRenderWidth] = useState<number | null>(null);
-  const [scollTop, setScrollTop] = useState<number>(0);
-
-  console.log(renderSvg);
-  
+  const [scollTop, setScrollTop] = useState<number>(0);  
 
   useEffect(() => {
     if (!renderRef.current) return;

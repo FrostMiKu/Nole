@@ -78,7 +78,6 @@ const Monaco: React.FC<MonacoProps> = ({
   );
 
   const pasteHandler = useCallback(async (event: ClipboardEvent) => {
-    console.log("paste");
     if (!file || !editorRef.current) return;
     const text = event.clipboardData?.getData("text");
     const range = editorRef.current.getSelection();
@@ -98,19 +97,6 @@ const Monaco: React.FC<MonacoProps> = ({
             {
               range: range,
               text: `\n#figure(\n  image("${res}"),\n  caption: []\n)\n`,
-            },
-          ],
-          () => null
-        );
-      }
-    }else{
-      if (range && model) {
-        model.pushEditOperations(
-          [],
-          [
-            {
-              range: range,
-              text: text,
             },
           ],
           () => null
